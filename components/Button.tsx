@@ -4,13 +4,14 @@ import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, StyleProp } f
 interface Props {
     title: string;
     onPress: () => void;
+    disabled?: boolean;
     style?: StyleProp<ViewStyle>;
     textStyle?: StyleProp<TextStyle>;
 }
 
-export const Button = ({ title, onPress, style, textStyle }: Props) => {
+export const Button = ({ title, onPress, disabled, style, textStyle }: Props) => {
     return (
-        <TouchableOpacity onPress={onPress} style={[styles.button, style]}>
+        <TouchableOpacity onPress={onPress} style={[styles.button, style]} disabled={disabled}>
             <Text style={[styles.text, textStyle]}>{title}</Text>
         </TouchableOpacity>
     );
