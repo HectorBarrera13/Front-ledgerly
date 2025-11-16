@@ -36,15 +36,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // -----------------------------------
   const login = async (email: string, password: string) => {
     setError(null);
-
     try {
       const data = await loginRequest(email, password);
 
       const token = data.access_token;
+      const expiresAt = data.session_expires_at;
+
       if (!token) throw new Error("No se recibió access_token");
+      if (!expiresAt)
+        throw new Error("No se recibió session_expires_at");
 
       setAccessToken(token);
+
       await AsyncStorage.setItem("access_token", token);
+      await AsyncStorage.setItem("session_expires_at", expiresAt);
 
       router.replace("/(tabs)/debts");
     } catch (err: any) {
@@ -67,19 +72,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setAccessToken(null);
     await AsyncStorage.removeItem("access_token");
+    await AsyncStorage.removeItem("session_expires_at");
+
     router.replace("/(auth)/login");
   };
 
   // -----------------------------------
-  // AUTO LOGIN
+  // AUTO LOGIN 
   // -----------------------------------
   const tryAutoLogin = async () => {
     const token = await AsyncStorage.getItem("access_token");
+    const expiresAtString = await AsyncStorage.getItem("session_expires_at");
 
-    if (token) {
-      setAccessToken(token);
-      router.replace("/(tabs)/debts");
+    if (!token || !expiresAtString) {
+      setLoading(false);
+      return;
     }
+
+    const expiresAt = new Date(expiresAtString).getTime();
+    const now = Date.now();
+
+    if (now >= expiresAt) {
+      console.log("Token expirado, cerrando sesión");
+      await logout();
+      setLoading(false);
+      return;
+    }
+
+    console.log("Token válido, restaurando sesión");
+    setAccessToken(token);
+    router.replace("/(tabs)/debts");
 
     setLoading(false);
   };
