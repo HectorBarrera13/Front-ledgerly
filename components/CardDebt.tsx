@@ -15,7 +15,10 @@ export const CardDebt: React.FC<CardDebtProps> = ({ debt, onSettle }) => (
                 <Text style={styles.creditor}>{debt.creditor}</Text>
             </View>
             <Text style={styles.amount}>
-                {debt.amount.toLocaleString("es-MX", { style: "currency", currency: "MXN" })}
+                {debt.amount.toLocaleString("es-MX", {
+                    style: "currency",
+                    currency: "MXN",
+                })}
             </Text>
         </View>
         <TouchableOpacity

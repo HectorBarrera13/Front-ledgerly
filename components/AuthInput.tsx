@@ -8,7 +8,7 @@ interface Props extends TextInputProps {
     onChangeText: (text: string) => void;
     secureTextEntry?: boolean;
     Icon?: React.FC<SvgProps>;
-    iconPosition?: 'left' | 'right';
+    iconPosition?: "left" | "right";
 }
 
 export const AuthInput = ({
@@ -17,13 +17,13 @@ export const AuthInput = ({
     onChangeText,
     secureTextEntry = false,
     Icon,
-    iconPosition = 'left',
+    iconPosition = "left",
     style,
     ...rest
 }: Props) => {
     return (
         <View style={styles.inputContainer}>
-            {Icon && iconPosition === 'left' && (
+            {Icon && iconPosition === "left" && (
                 <View style={styles.iconLeft}>
                     <Icon width={22} height={22} />
                 </View>
@@ -31,8 +31,8 @@ export const AuthInput = ({
             <TextInput
                 style={[
                     styles.input,
-                    Icon && iconPosition === 'left' && { paddingLeft: 40 },
-                    Icon && iconPosition === 'right' && { paddingRight: 40 },
+                    Icon && iconPosition === "left" && { paddingLeft: 40 },
+                    Icon && iconPosition === "right" && { paddingRight: 40 },
                     style,
                 ]}
                 placeholder={placeholder}
@@ -41,7 +41,7 @@ export const AuthInput = ({
                 secureTextEntry={secureTextEntry}
                 {...rest}
             />
-            {Icon && iconPosition === 'right' && (
+            {Icon && iconPosition === "right" && (
                 <View style={styles.iconRight}>
                     <Icon width={22} height={22} />
                 </View>
@@ -52,38 +52,38 @@ export const AuthInput = ({
 
 const styles = StyleSheet.create({
     inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: '80%',
-        backgroundColor: '#f7f7f7',
+        flexDirection: "row",
+        alignItems: "center",
+        width: "80%",
+        backgroundColor: "#f7f7f7",
         borderRadius: 65,
         borderWidth: 2,
-        borderColor: '#bdbdbd',
+        borderColor: "#bdbdbd",
         paddingHorizontal: 10,
         height: 50,
     },
     input: {
         flex: 1,
-        height: '100%',
+        height: "100%",
         fontSize: 18,
-        color: '#888',
-        backgroundColor: 'transparent',
+        color: "#888",
+        backgroundColor: "transparent",
         borderWidth: 0,
     },
     iconLeft: {
-        position: 'absolute',
+        position: "absolute",
         left: 18,
         zIndex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100%',
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100%",
     },
     iconRight: {
-        position: 'absolute',
+        position: "absolute",
         right: 18,
         zIndex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100%',
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100%",
     },
 });
