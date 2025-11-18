@@ -1,4 +1,3 @@
-// app/(auth)/login.tsx
 import React, { useState } from "react";
 import { View, Text, StyleSheet, Alert } from "react-native";
 import { Link } from "expo-router";
@@ -17,6 +16,7 @@ export default function LoginScreen() {
       setLoading(true);
       await login(email, password);
     } catch (error: any) {
+      console.error("Login error:", error);
       Alert.alert("Error", error.message || "Ocurrió un error");
     } finally {
       setLoading(false);
