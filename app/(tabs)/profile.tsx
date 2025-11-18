@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Button } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 
 export default function ProfileScreen() {
-  const { logout } = useAuth(); // 👈 accedemos al logout
+  const { logout } = useAuth(); 
 
   return (
     <View style={styles.container}>
