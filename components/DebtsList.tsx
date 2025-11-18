@@ -1,6 +1,6 @@
 import React from "react";
 import { FlatList, StyleSheet } from "react-native";
-import {CardDebt} from "./CardDebt";
+import { CardDebt } from "./CardDebt";
 import { Debt } from "../types/Debt";
 
 interface DebtsListProps {
