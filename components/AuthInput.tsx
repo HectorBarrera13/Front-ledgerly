@@ -1,5 +1,5 @@
 import React from "react";
-import { TextInput, StyleSheet, View, TextInputProps } from "react-native";
+import { TextInput, StyleSheet, View, TextInputProps, StyleProp, ViewStyle } from "react-native";
 import { SvgProps } from "react-native-svg";
 
 interface Props extends TextInputProps {
@@ -9,6 +9,9 @@ interface Props extends TextInputProps {
     secureTextEntry?: boolean;
     Icon?: React.FC<SvgProps>;
     iconPosition?: "left" | "right";
+    containerStyle?: StyleProp<ViewStyle>;
+    iconLeftStyle?: StyleProp<ViewStyle>;
+    iconSize?: number;
 }
 
 export const AuthInput = ({
@@ -18,14 +21,17 @@ export const AuthInput = ({
     secureTextEntry = false,
     Icon,
     iconPosition = "left",
+    containerStyle,
+    iconLeftStyle,
+    iconSize = 22,
     style,
     ...rest
 }: Props) => {
     return (
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, containerStyle]}>
             {Icon && iconPosition === "left" && (
-                <View style={styles.iconLeft}>
-                    <Icon width={22} height={22} />
+                <View style={[styles.iconLeft, iconLeftStyle,]}>
+                    <Icon width={iconSize} height={iconSize} />
                 </View>
             )}
             <TextInput
@@ -54,7 +60,7 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: "row",
         alignItems: "center",
-        width: "80%",
+        width: "92%",
         backgroundColor: "#f7f7f7",
         borderRadius: 65,
         borderWidth: 2,
@@ -72,7 +78,7 @@ const styles = StyleSheet.create({
     },
     iconLeft: {
         position: "absolute",
-        left: 18,
+        left: 15,
         zIndex: 1,
         justifyContent: "center",
         alignItems: "center",

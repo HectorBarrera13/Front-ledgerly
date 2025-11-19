@@ -11,8 +11,8 @@ export const loginRequest = async (
         headers: {
             "X-Client-Type": "mobile",
         },
-        body: JSON.stringify({ email, password }),
-    });
+        body: { email, password },
+    }as any);
 
     if (!response.ok) throw new Error("Credenciales incorrectas");
 
@@ -56,14 +56,14 @@ export const registerRequest = async (
         headers: {
             "X-Client-Type": "mobile",
         },
-        body: JSON.stringify({
+        body:{
             first_name,
             last_name,
             email,
             password,
             phone,
-        }),
-    });
+        },
+    }as any);
 
     if (!response.ok) throw new Error("No se pudo registrar el usuario");
 

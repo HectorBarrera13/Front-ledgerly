@@ -63,21 +63,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             const data = await loginRequest(email, password);
 
-            const { access_token, expires_at, refresh_token } = data.token;
+            const { accessToken, expiresAt, refreshToken } = data.token;
 
-            if (!access_token) throw new Error("No se recibió access_token");
-            if (!expires_at) throw new Error("No se recibió expires_at");
-            if (!refresh_token) throw new Error("No se recibió refresh_token");
-
-            setAccessToken(access_token);
-            setRefreshToken(refresh_token);
-            setAccessTokenExpiresAt(expires_at);
+            if (!accessToken) throw new Error("No se recibió accessToken");
+            if (!expiresAt) throw new Error("No se recibió expiresAt");
+            if (!refreshToken) throw new Error("No se recibió refreshToken");
+            setAccessToken(accessToken);
+            setRefreshToken(refreshToken);
+            setAccessTokenExpiresAt(expiresAt);
             setUser(data.user);
             setAccount(data.account);
 
-            await AsyncStorage.setItem("access_token", access_token);
-            await AsyncStorage.setItem("refresh_token", refresh_token);
-            await AsyncStorage.setItem("access_token_expires_at", expires_at);
+            await AsyncStorage.setItem("access_token", accessToken);
+            await AsyncStorage.setItem("refresh_token", refreshToken);
+            await AsyncStorage.setItem("access_token_expires_at", expiresAt);
             await AsyncStorage.setItem("user", JSON.stringify(data.user));
             await AsyncStorage.setItem("account", JSON.stringify(data.account));
 
@@ -168,6 +167,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const tryRefreshToken = async (storedRefreshToken: string) => {
         try {
             const data = await refreshTokenRequest(storedRefreshToken);
+            console.log("REFRESH DATA:", data); 
             setAccessToken(data.access_token);
             setAccessTokenExpiresAt(data.expires_at);
             await AsyncStorage.setItem("access_token", data.access_token);
