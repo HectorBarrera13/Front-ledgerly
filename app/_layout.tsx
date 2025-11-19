@@ -1,11 +1,15 @@
 // app/_layout.tsx
-import { Stack } from "expo-router";
-import { AuthProvider } from "@/context/AuthContext";
+import { Slot, SplashScreen } from "expo-router";
+import AuthProvider from "@/context/AuthContext";
+
+SplashScreen.preventAutoHideAsync().catch((err) => {
+    console.error("Failed to prevent auto-hide:", err);
+});
 
 export default function RootLayout() {
     return (
         <AuthProvider>
-            <Stack screenOptions={{ headerShown: false }} />
+            <Slot />
         </AuthProvider>
     );
 }

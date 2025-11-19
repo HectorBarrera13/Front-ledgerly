@@ -1,267 +1,119 @@
-import React, {
-    createContext,
-    useContext,
-    useEffect,
-    useState,
-    ReactNode,
-} from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
-import {
-    loginRequest,
-    logoutRequest,
-    refreshTokenRequest,
-    registerRequest,
-} from "@/services/authApi";
-import { User } from "@/types/User";
-import { Account } from "@/types/Account";
+// context/AuthContext.tsx
+import React, { createContext, useEffect, useContext, useReducer } from "react";
+import { router, useRootNavigationState, useSegments } from "expo-router";
+import { SplashScreen } from "expo-router";
 
-type AuthContextType = {
-    accessToken: string | null;
-    user: User | null;
-    account: Account | null;
-    login: (email: string, password: string) => Promise<void>;
-    logout: () => Promise<void>;
-    register: (
-        firstName: string,
-        lastName: string,
-        email: string,
-        password: string,
-        phone: { countryCode: string; number: string }
-    ) => Promise<void>;
-    loading: boolean;
-    error: string | null;
+import { Session } from "@/services/authService";
+import { authService } from "@/services/authService";
+
+type AuthData = {
+    isLoading: boolean;
+    session: Session | null;
 };
 
-const AuthContext = createContext<AuthContextType>({
-    accessToken: null,
-    user: null,
-    account: null,
-    login: async () => {},
-    logout: async () => {},
-    register: async () => {},
-    loading: true,
-    error: null,
+const AuthContext = createContext<AuthData>({
+    isLoading: true,
+    session: null,
 });
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [accessToken, setAccessToken] = useState<string | null>(null);
-    const [refreshToken, setRefreshToken] = useState<string | null>(null);
-    const [accessTokenExpiresAt, setAccessTokenExpiresAt] = useState<string | null>(null);
-    const [user, setUser] = useState<User | null>(null);
-    const [account, setAccount] = useState<Account | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+interface Props {
+    children: React.ReactNode;
+}
 
-    // -----------------------------------
-    // LOGIN
-    // -----------------------------------
-    const login = async (email: string, password: string) => {
-        setError(null);
-        try {
-            const data = await loginRequest(email, password);
-            const { accessToken, expiresAt, refreshToken } = data.token;
+type AuthState = {
+    isLoading: boolean;
+    session: Session | null;
+    initialCheckDone: boolean;
+};
 
-            if (!accessToken) throw new Error("No se recibió accessToken");
-            if (!expiresAt) throw new Error("No se recibió expiresAt");
-            if (!refreshToken) throw new Error("No se recibió refreshToken");
+type AuthAction =
+    | { type: "RESTORE_SESSION"; session: Session | null }
+    | { type: "UPDATE_SESSION"; session: Session | null };
 
-            setAccessToken(accessToken);
-            setRefreshToken(refreshToken);
-            setAccessTokenExpiresAt(expiresAt);
-            setUser(data.user);
-            setAccount(data.account);
+const initialState: AuthState = {
+    isLoading: true,
+    session: null,
+    initialCheckDone: false,
+};
 
-            await AsyncStorage.setItem("access_token", accessToken);
-            await AsyncStorage.setItem("refresh_token", refreshToken);
-            await AsyncStorage.setItem("access_token_expires_at", expiresAt);
-            await AsyncStorage.setItem("user", JSON.stringify(data.user));
-            await AsyncStorage.setItem("account", JSON.stringify(data.account));
+function authReducer(state: AuthState, action: AuthAction): AuthState {
+    switch (action.type) {
+        case "RESTORE_SESSION":
+            return {
+                ...state,
+                session: action.session,
+                isLoading: false,
+                initialCheckDone: true,
+            };
+        case "UPDATE_SESSION":
+            return {
+                ...state,
+                session: action.session,
+            };
+        default:
+            return state;
+    }
+}
 
-            router.replace("/(tabs)/debts");
-
-        } catch (err: any) {
-            setError(err.message);
-            throw err;
-        }
-    };
-
-    // -----------------------------------
-    // LOGOUT
-    // -----------------------------------
-    const logout = async () => {
-        try {
-            if (accessToken) {
-                await logoutRequest(accessToken);
-            }
-        } catch (error) {
-        }
-
-        setAccessToken(null);
-        setRefreshToken(null);
-        setAccessTokenExpiresAt(null);
-        setUser(null);
-        setAccount(null);
-
-        await AsyncStorage.multiRemove([
-            "access_token",
-            "refresh_token",
-            "access_token_expires_at",
-            "user",
-            "account",
-        ]);
-
-        router.replace("/(auth)/login");
-    };
-
-    // -----------------------------------
-    // REGISTER
-    // -----------------------------------
-    const register = async (
-        firstName: string,
-        lastName: string,
-        email: string,
-        password: string,
-        phone: { countryCode: string; number: string }
-    ) => {
-        setError(null);
-        try {
-            const data = await registerRequest(
-                firstName,
-                lastName,
-                email,
-                password,
-                phone
-            );
-
-            const { accessToken, expiresAt, refreshToken } = data.token;
-
-            if (!accessToken) throw new Error("No se recibió accessToken");
-            if (!expiresAt) throw new Error("No se recibió expiresAt");
-            if (!refreshToken) throw new Error("No se recibió refreshToken");
-
-            setAccessToken(accessToken);
-            setRefreshToken(refreshToken);
-            setAccessTokenExpiresAt(expiresAt);
-            setUser(data.user);
-            setAccount(data.account);
-
-            await AsyncStorage.setItem("access_token", accessToken);
-            await AsyncStorage.setItem("refresh_token", refreshToken);
-            await AsyncStorage.setItem("access_token_expires_at", expiresAt);
-            await AsyncStorage.setItem("user", JSON.stringify(data.user));
-            await AsyncStorage.setItem("account", JSON.stringify(data.account));
-
-            router.replace("/(tabs)/debts");
-
-        } catch (err: any) {
-            setError(err.message);
-            throw err;
-        }
-    };
-
-    // -----------------------------------
-    // REFRESH TOKEN
-    // -----------------------------------
-    const tryRefreshToken = async (storedRefreshToken: string) => {
-        try {
-            const data = await refreshTokenRequest(storedRefreshToken);
-
-            setAccessToken(data.accessToken);
-            setAccessTokenExpiresAt(data.expiresAt);
-
-            await AsyncStorage.setItem("access_token", data.accessToken);
-            await AsyncStorage.setItem("access_token_expires_at", data.expiresAt);
-
-            return true;
-        } catch (err) {
-            await logout();
-            return false;
-        }
-    };
-
-    // -----------------------------------
-    // AUTO LOGIN
-    // -----------------------------------
-    const tryAutoLogin = async () => {
-        const [
-            token,
-            refreshTokenStored,
-            expiresAtString,
-            userString,
-            accountString,
-        ] = await Promise.all([
-            AsyncStorage.getItem("access_token"),
-            AsyncStorage.getItem("refresh_token"),
-            AsyncStorage.getItem("access_token_expires_at"),
-            AsyncStorage.getItem("user"),
-            AsyncStorage.getItem("account"),
-        ]);
-
-        if (!refreshTokenStored) {
-            setLoading(false);
-            return;
-        }
-
-        let validToken = token;
-        let validExpiresAt = expiresAtString;
-
-        if (token && expiresAtString) {
-            const expiresAt = new Date(expiresAtString).getTime();
-            const now = Date.now();
-
-            if (now >= expiresAt) {
-                const refreshed = await tryRefreshToken(refreshTokenStored);
-                if (!refreshed) {
-                    setLoading(false);
-                    return;
-                }
-                validToken = await AsyncStorage.getItem("access_token");
-                validExpiresAt = await AsyncStorage.getItem("access_token_expires_at");
-            }
-        } else {
-            const refreshed = await tryRefreshToken(refreshTokenStored);
-            if (!refreshed) {
-                setLoading(false);
-                return;
-            }
-            validToken = await AsyncStorage.getItem("access_token");
-            validExpiresAt = await AsyncStorage.getItem("access_token_expires_at");
-        }
-
-        setAccessToken(validToken);
-        setAccessTokenExpiresAt(validExpiresAt);
-
-        if (userString) {
-            setUser(JSON.parse(userString));        }
-        if (accountString) {
-            setAccount(JSON.parse(accountString));
-        }
-
-        router.replace("/(tabs)/debts");
-        setLoading(false);
-    };
+export default function AuthProvider(props: Props) {
+    const [state, dispatch] = useReducer(authReducer, initialState);
+    const { session, isLoading, initialCheckDone } = state;
+    const segments = useSegments();
+    const ready = useRootNavigationState();
 
     useEffect(() => {
-        tryAutoLogin();
+        async function fetchSession() {
+            try {
+                const currentSession = await authService.getSession();
+                dispatch({
+                    type: "RESTORE_SESSION",
+                    session: currentSession,
+                });
+            } catch (error) {
+                console.error("Error fetching session:", error);
+                dispatch({ type: "RESTORE_SESSION", session: null });
+            } finally {
+                SplashScreen.hideAsync().catch((err) => {
+                    console.error("Error hiding splash screen:", err);
+                });
+            }
+        }
+
+        fetchSession();
+
+        authService.onAuthStateChanged((newSession) => {
+            dispatch({ type: "UPDATE_SESSION", session: newSession });
+        });
+
+        // Cleanup
+        return () => {
+            authService.unsubscribe();
+        };
     }, []);
 
+    useEffect(() => {
+        if (!ready) return;
+        if (!initialCheckDone) return;
+
+        const isRootRoute = (segments.length as number) === 0;
+        const isAuthRoute = segments[0] === "(auth)";
+
+        if (session) {
+            if (isAuthRoute || isRootRoute) {
+                router.replace("/(tabs)/debts");
+            }
+        } else {
+            if (!isAuthRoute || isRootRoute) {
+                router.replace("/(auth)/login");
+            }
+        }
+    }, [initialCheckDone, session, segments, ready]);
+
     return (
-        <AuthContext.Provider
-            value={{
-                accessToken,
-                user,
-                account,
-                login,
-                logout,
-                register,
-                loading,
-                error,
-            }}
-        >
-            {children}
+        <AuthContext.Provider value={{ isLoading, session }}>
+            {props.children}
         </AuthContext.Provider>
     );
-};
+}
 
 export const useAuth = () => useContext(AuthContext);

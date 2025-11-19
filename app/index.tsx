@@ -1,6 +1,13 @@
 // app/index.tsx
-import { Redirect } from "expo-router";
+import { ActivityIndicator, View } from "react-native";
 
 export default function Index() {
-  return <Redirect href="(auth)/login" />;
+    // ⭐ AuthProvider manejará la navegación
+    return (
+        <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+            <ActivityIndicator size="large" />
+        </View>
+    );
 }

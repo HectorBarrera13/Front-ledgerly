@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { friendService } from "@/services/friendApi";
+import friendService from "@/services/friendService";
 import { Friend } from "@/types/Friends";
 
 export function useFriends(limit: number = 5) {
@@ -31,14 +31,20 @@ export function useFriends(limit: number = 5) {
             setError(null);
 
             const data = await friendService.getAll(limit, null);
-            setFriends(Array.isArray(data?.items) ? data.items : []);
-            setCursor(data?.nextCursor || undefined);
-            setHasMore(
-                data?.nextCursor !== undefined && data?.nextCursor !== null
-            );
+            if (data) {
+                setFriends(data.items);
+                setCursor(data.nextCursor || undefined);
+                setHasMore(
+                    data.nextCursor !== undefined && data.nextCursor !== null
+                );
+            }
         } catch (error) {
             printDebug(error);
-            setError("Failed to load friends");
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : "Failed to load friends"
+            );
         } finally {
             setLoading(false);
         }
@@ -52,16 +58,20 @@ export function useFriends(limit: number = 5) {
             setError(null);
 
             const data = await friendService.getAll(limit, cursor);
-            setFriends((prev) =>
-                uniqueById([...prev, ...(Array.isArray(data?.items) ? data.items : [])])
-            );
-            setCursor(data?.nextCursor || undefined);
-            setHasMore(
-                data?.nextCursor !== undefined && data?.nextCursor !== null
-            );
+            if (data) {
+                setFriends((prev) => uniqueById([...prev, ...data.items]));
+                setCursor(data.nextCursor || undefined);
+                setHasMore(
+                    data.nextCursor !== undefined && data.nextCursor !== null
+                );
+            }
         } catch (error) {
             printDebug(error);
-            setError("Failed to load more friends");
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : "Failed to load more friends"
+            );
         } finally {
             setLoading(false);
         }
@@ -73,7 +83,9 @@ export function useFriends(limit: number = 5) {
             setFriends((prev) => uniqueById([newFriend, ...prev]));
         } catch (error) {
             printDebug(error);
-            setError("Failed to add friend");
+            setError(
+                error instanceof Error ? error.message : "Failed to add friend"
+            );
         }
     }, []);
 
@@ -86,7 +98,11 @@ export function useFriends(limit: number = 5) {
             } catch (error) {
                 setFriends(previousFriends);
                 printDebug(error);
-                setError("Failed to remove friend");
+                setError(
+                    error instanceof Error
+                        ? error.message
+                        : "Failed to remove friend"
+                );
             }
         },
         [friends]

@@ -1,163 +1,230 @@
+// services/apiClient.ts
 import { env } from "@/config/env";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { camelToSnake, snakeToCamel } from "@/lib/convertBody";
 
-function snakeToCamel(obj: any): any {
-    if (obj === null || typeof obj !== "object") return obj;
-
-    if (Array.isArray(obj)) {
-        return obj.map((item) => snakeToCamel(item));
+class ApiError extends Error {
+    status: number;
+    constructor(message: string, status: number) {
+        super(message);
+        this.name = "ApiError";
+        this.status = status;
     }
-
-    const result: any = {};
-
-    for (const key in obj) {
-        const camelKey = key.replace(/_([a-z])/g, (_, letter) =>
-            letter.toUpperCase()
-        );
-        result[camelKey] = snakeToCamel(obj[key]);
-    }
-
-    return result;
 }
 
-function camelToSnake(obj: any): any {
-    if (obj === null || typeof obj !== "object") return obj;
-
-    if (Array.isArray(obj)) {
-        return obj.map((item) => camelToSnake(item));
+class TimeoutError extends Error {
+    constructor(message: string = "Request timeout") {
+        super(message);
+        this.name = "TimeoutError";
     }
-
-    const result: any = {};
-
-    for (const key in obj) {
-        const snakeKey = key.replace(
-            /[A-Z]/g,
-            (letter) => `_${letter.toLowerCase()}`
-        );
-        result[snakeKey] = camelToSnake(obj[key]);
-    }
-
-    return result;
 }
 
-type FetchOptions = RequestInit & {
-    params?: Record<string, any>;
-    skipCaseConversion?: boolean;
-    timeout?: number;
+class NetworkError extends Error {
+    constructor(message: string = "Network error - check your connection") {
+        super(message);
+        this.name = "NetworkError";
+    }
+}
+
+const clientTypeHeader = {
+    "X-Client-Type": "mobile",
 };
+
+interface FetchOptions extends Omit<RequestInit, "method" | "body" | "signal"> {
+    timeout?: number;
+}
+
+const timeoutDurationDefault = 30000; // 30 segundos
 
 class ApiClient {
     private baseUrl: string;
-    private defaultHeaders: Record<string, string>;
+    private accessToken: string | null = null;
 
-    constructor(baseUrl: string, defaultHeaders: Record<string, string> = {}) {
-        this.baseUrl = baseUrl;
-        this.defaultHeaders = {
-            "Content-Type": "application/json",
-            ...defaultHeaders,
-        };
+    get url() {
+        return this.baseUrl;
     }
 
-    async fetch(
+    constructor(baseUrl: string) {
+        this.baseUrl = baseUrl;
+    }
+    setAccessToken(token: string) {
+        this.accessToken = token;
+    }
+    removeAccessToken() {
+        this.accessToken = null;
+    }
+
+    private async fetchWrapper<T, R>(
         endpoint: string,
-        options: FetchOptions = {}
-    ): Promise<Response> {
-        const {
-            params,
-            headers,
-            body,
-            skipCaseConversion = false,
-            timeout = 3000,
-            ...fetchOptions
-        } = options;
-
-        let url = `${this.baseUrl}${endpoint}`;
-        if (params) {
-            const searchParams = new URLSearchParams(params);
-            url += `?${searchParams.toString()}`;
-        }
-
-        let mergedHeaders = {
-            ...this.defaultHeaders,
-            ...headers,
-        };
-
-        // Solo agrega el access token si NO hay Authorization ya en headers
-        try {
-            const accessToken = await AsyncStorage.getItem("access_token");
-            if (accessToken && !("Authorization" in mergedHeaders)) {
-                mergedHeaders = {
-                    ...mergedHeaders,
-                    Authorization: `Bearer ${accessToken}`,
-                };
-                if (__DEV__) {
-                    console.debug("[APIClient] Usando accessToken:", accessToken);
-                }
-            }
-        } catch (e) {
-            if (__DEV__) {
-                console.debug("[APIClient] No se pudo leer accessToken:", e);
-            }
-        }
-
-        let processedBody = body;
-        if (body && !skipCaseConversion) {
-            processedBody = JSON.stringify(camelToSnake(body));
-        }
-
-        if (__DEV__) {
-            console.debug(`[API] ${options.method || "GET"} ${url}`);
-        }
-
+        data: T,
+        method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
+        options?: FetchOptions
+    ): Promise<R> {
         const controller = new AbortController();
+        const timeout = options?.timeout ?? timeoutDurationDefault;
         const id = setTimeout(() => controller.abort(), timeout);
+
+        const url = `${this.baseUrl}${endpoint}`;
+
+        const {
+            timeout: _timeout,
+            headers: customHeaders,
+            ...restOptions
+        } = options || {};
+
+        const finalHeaders = {
+            "Content-Type": "application/json",
+            ...clientTypeHeader,
+            ...(this.accessToken
+                ? { Authorization: `Bearer ${this.accessToken}` }
+                : {}),
+            ...customHeaders,
+        };
 
         try {
             const response = await fetch(url, {
-                ...fetchOptions,
-                headers: mergedHeaders,
-                body: processedBody,
+                ...restOptions,
+                method,
+                headers: finalHeaders,
+                body:
+                    data !== null && data !== undefined
+                        ? JSON.stringify(camelToSnake(data))
+                        : undefined,
                 signal: controller.signal,
             });
 
             clearTimeout(id);
+            const contentType = response.headers.get("Content-Type");
 
-            if (!skipCaseConversion) {
-                return this.transformResponse(response);
+            if (!response.ok) {
+                if (contentType && contentType.includes("application/json")) {
+                    const errorData = await response.json();
+                    const errorMessage =
+                        errorData.message || "An error occurred";
+                    throw new ApiError(errorMessage, response.status);
+                } else {
+                    throw new ApiError(
+                        `HTTP error! status: ${response.status}`,
+                        response.status
+                    );
+                }
             }
-            return response;
-        } catch (err) {
-            clearTimeout(id);
-            throw err;
+
+            if (contentType && contentType.includes("application/json")) {
+                // La respuesta tiene contenido JSON, analízalo.
+                const responseData = await response.json();
+                console.log("Datos analizados:", responseData);
+                return snakeToCamel(responseData) as R;
+            } else {
+                console.log(
+                    "Respuesta vacía o no es JSON, retornando null/vacío."
+                );
+                return null as unknown as R;
+            }
+        } catch (error) {
+            // 1. Si nosotros lanzamos ApiError manualmente arriba (400, 500, etc)
+            if (error instanceof ApiError) {
+                throw error;
+            }
+
+            // 2. Si el AbortController disparó la señal (Timeout)
+            // fetch lanza un error con name 'AbortError'
+            else if (error instanceof Error && error.name === "AbortError") {
+                throw new TimeoutError();
+            }
+
+            // 3. Si el fetch falló por falta de internet o DNS (Network Error)
+            // fetch lanza un TypeError genérico cuando no puede conectar
+            else {
+                // Opcional: puedes loguear el error original para debug
+                // console.error("Error de red original:", error);
+                throw new NetworkError();
+            }
+        } finally {
+            clearTimeout(id); // Asegurarse de limpiar el temporizador
         }
     }
 
-    private transformResponse(response: Response): Response {
-        const originalJson = response.json.bind(response);
-
-        response.json = async function () {
-            const text = await response.text();
-            if (!text) return {};
-            const data = JSON.parse(text);
-            return snakeToCamel(data);
+    async fetch(
+        input: URL | RequestInfo,
+        requestInit?: RequestInit
+    ): Promise<Response> {
+        const url = `${this.baseUrl}${input}`;
+        const headers = {
+            ...clientTypeHeader,
+            ...(this.accessToken
+                ? { Authorization: `Bearer ${this.accessToken}` }
+                : {}),
         };
-
-        return response;
+        return fetch(url, { ...requestInit, headers });
     }
 
-    setHeader(key: string, value: string) {
-        this.defaultHeaders = {
-            ...this.defaultHeaders,
-            [key]: value,
-        };
+    post<R>(endpoint: string, data: any, options?: FetchOptions): Promise<R>;
+    post<T, R>(endpoint: string, data: T, options?: FetchOptions): Promise<R>;
+    post<R>(endpoint: string, options?: FetchOptions): Promise<R>;
+
+    async post<T, R>(
+        endpoint: string,
+        data?: T | null,
+        options?: FetchOptions
+    ): Promise<R> {
+        const body = data === undefined ? null : data;
+        return this.fetchWrapper<T, R>(endpoint, body as T, "POST", options);
     }
 
-    removeHeader(key: string) {
-        const headers = { ...this.defaultHeaders };
-        delete headers[key];
-        this.defaultHeaders = headers;
+    get<T, R>(endpoint: string, data: T, options?: FetchOptions): Promise<R>;
+    get<R>(endpoint: string, data: any, options?: FetchOptions): Promise<R>;
+    get<R>(endpoint: string, options?: FetchOptions): Promise<R>;
+
+    async get<T, R>(
+        endpoint: string,
+        data?: T,
+        options?: FetchOptions
+    ): Promise<R> {
+        const body = data === undefined ? null : data;
+        return this.fetchWrapper<T, R>(endpoint, body as T, "GET", options);
+    }
+
+    put<R>(endpoint: string, options?: FetchOptions): Promise<R>;
+    put<T, R>(endpoint: string, data: T, options?: FetchOptions): Promise<R>;
+    put<R>(endpoint: string, data: any, options?: FetchOptions): Promise<R>;
+
+    async put<T, R>(
+        endpoint: string,
+        data?: T,
+        options?: FetchOptions
+    ): Promise<R> {
+        const body = data === undefined ? null : data;
+        return this.fetchWrapper<T, R>(endpoint, body as T, "PUT", options);
+    }
+
+    delete<R>(endpoint: string, options?: FetchOptions): Promise<R>;
+    delete<T, R>(endpoint: string, data: T, options?: FetchOptions): Promise<R>;
+    delete<R>(endpoint: string, data: any, options?: FetchOptions): Promise<R>;
+
+    async delete<T, R>(
+        endpoint: string,
+        data?: T,
+        options?: FetchOptions
+    ): Promise<R> {
+        const body = data === undefined ? null : data;
+        return this.fetchWrapper<T, R>(endpoint, body as T, "DELETE", options);
+    }
+
+    patch<R>(endpoint: string, options?: FetchOptions): Promise<R>;
+    patch<T, R>(endpoint: string, data: T, options?: FetchOptions): Promise<R>;
+    patch<R>(endpoint: string, data: any, options?: FetchOptions): Promise<R>;
+
+    async patch<T, R>(
+        endpoint: string,
+        data?: T,
+        options?: FetchOptions
+    ): Promise<R> {
+        const body = data === undefined ? null : data;
+        return this.fetchWrapper<T, R>(endpoint, body as T, "PATCH", options);
     }
 }
 
+// Exportar instancia singleton
 export default new ApiClient(env.apiUrl);
-export { ApiClient };
+
+export { ApiClient, ApiError, TimeoutError, NetworkError, FetchOptions };

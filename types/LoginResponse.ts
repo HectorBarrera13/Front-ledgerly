@@ -7,3 +7,14 @@ export interface LoginResponse {
     user: User;
     token: Token;
 }
+
+export interface AuthProfile {
+    account: Account;
+    user: User;
+    token: Token;
+}
+
+export interface Profile {
+    account: Account;
+    user: User;
+}

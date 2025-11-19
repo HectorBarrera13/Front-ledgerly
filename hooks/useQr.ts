@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { friendService } from "@/services/friendApi";
+import friendService from "@/services/friendService";
 
 export function useQr() {
     const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
@@ -17,7 +17,11 @@ export function useQr() {
             }
             setQrCodeUrl(qrUrl);
         } catch (error) {
-            setError((error as Error).message);
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : "Failed to load QR code"
+            );
         } finally {
             setLoading(false);
         }
