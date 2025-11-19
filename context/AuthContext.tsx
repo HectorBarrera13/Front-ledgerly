@@ -23,11 +23,11 @@ type AuthContextType = {
     login: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
     register: (
-        first_name: string,
-        last_name: string,
+        firstName: string,
+        lastName: string,
         email: string,
         password: string,
-        phone: { country_code: string; number: string }
+        phone: { countryCode: string; number: string }
     ) => Promise<void>;
     loading: boolean;
     error: string | null;
@@ -47,9 +47,7 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [accessToken, setAccessToken] = useState<string | null>(null);
     const [refreshToken, setRefreshToken] = useState<string | null>(null);
-    const [accessTokenExpiresAt, setAccessTokenExpiresAt] = useState<
-        string | null
-    >(null);
+    const [accessTokenExpiresAt, setAccessTokenExpiresAt] = useState<string | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [account, setAccount] = useState<Account | null>(null);
     const [loading, setLoading] = useState(true);
@@ -62,12 +60,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setError(null);
         try {
             const data = await loginRequest(email, password);
-
             const { accessToken, expiresAt, refreshToken } = data.token;
 
             if (!accessToken) throw new Error("No se recibió accessToken");
             if (!expiresAt) throw new Error("No se recibió expiresAt");
             if (!refreshToken) throw new Error("No se recibió refreshToken");
+
             setAccessToken(accessToken);
             setRefreshToken(refreshToken);
             setAccessTokenExpiresAt(expiresAt);
@@ -81,6 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await AsyncStorage.setItem("account", JSON.stringify(data.account));
 
             router.replace("/(tabs)/debts");
+
         } catch (err: any) {
             setError(err.message);
             throw err;
@@ -96,7 +95,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 await logoutRequest(accessToken);
             }
         } catch (error) {
-            console.log("Error en logout:", error);
         }
 
         setAccessToken(null);
@@ -120,41 +118,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // REGISTER
     // -----------------------------------
     const register = async (
-        first_name: string,
-        last_name: string,
+        firstName: string,
+        lastName: string,
         email: string,
         password: string,
-        phone: { country_code: string; number: string }
+        phone: { countryCode: string; number: string }
     ) => {
         setError(null);
         try {
             const data = await registerRequest(
-                first_name,
-                last_name,
+                firstName,
+                lastName,
                 email,
                 password,
                 phone
             );
 
-            const { access_token, expires_at, refresh_token } = data.token;
+            const { accessToken, expiresAt, refreshToken } = data.token;
 
-            if (!access_token) throw new Error("No se recibió access_token");
-            if (!expires_at) throw new Error("No se recibió expires_at");
-            if (!refresh_token) throw new Error("No se recibió refresh_token");
+            if (!accessToken) throw new Error("No se recibió accessToken");
+            if (!expiresAt) throw new Error("No se recibió expiresAt");
+            if (!refreshToken) throw new Error("No se recibió refreshToken");
 
-            setAccessToken(access_token);
-            setRefreshToken(refresh_token);
-            setAccessTokenExpiresAt(expires_at);
+            setAccessToken(accessToken);
+            setRefreshToken(refreshToken);
+            setAccessTokenExpiresAt(expiresAt);
             setUser(data.user);
             setAccount(data.account);
 
-            await AsyncStorage.setItem("access_token", access_token);
-            await AsyncStorage.setItem("refresh_token", refresh_token);
-            await AsyncStorage.setItem("access_token_expires_at", expires_at);
+            await AsyncStorage.setItem("access_token", accessToken);
+            await AsyncStorage.setItem("refresh_token", refreshToken);
+            await AsyncStorage.setItem("access_token_expires_at", expiresAt);
             await AsyncStorage.setItem("user", JSON.stringify(data.user));
             await AsyncStorage.setItem("account", JSON.stringify(data.account));
 
             router.replace("/(tabs)/debts");
+
         } catch (err: any) {
             setError(err.message);
             throw err;
@@ -167,14 +166,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const tryRefreshToken = async (storedRefreshToken: string) => {
         try {
             const data = await refreshTokenRequest(storedRefreshToken);
-            console.log("REFRESH DATA:", data); 
-            setAccessToken(data.access_token);
-            setAccessTokenExpiresAt(data.expires_at);
-            await AsyncStorage.setItem("access_token", data.access_token);
-            await AsyncStorage.setItem(
-                "access_token_expires_at",
-                data.expires_at
-            );
+
+            setAccessToken(data.accessToken);
+            setAccessTokenExpiresAt(data.expiresAt);
+
+            await AsyncStorage.setItem("access_token", data.accessToken);
+            await AsyncStorage.setItem("access_token_expires_at", data.expiresAt);
+
             return true;
         } catch (err) {
             await logout();
@@ -219,9 +217,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     return;
                 }
                 validToken = await AsyncStorage.getItem("access_token");
-                validExpiresAt = await AsyncStorage.getItem(
-                    "access_token_expires_at"
-                );
+                validExpiresAt = await AsyncStorage.getItem("access_token_expires_at");
             }
         } else {
             const refreshed = await tryRefreshToken(refreshTokenStored);
@@ -230,17 +226,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 return;
             }
             validToken = await AsyncStorage.getItem("access_token");
-            validExpiresAt = await AsyncStorage.getItem(
-                "access_token_expires_at"
-            );
+            validExpiresAt = await AsyncStorage.getItem("access_token_expires_at");
         }
 
         setAccessToken(validToken);
-        setRefreshToken(refreshTokenStored);
         setAccessTokenExpiresAt(validExpiresAt);
 
-        if (userString) setUser(JSON.parse(userString));
-        if (accountString) setAccount(JSON.parse(accountString));
+        if (userString) {
+            setUser(JSON.parse(userString));        }
+        if (accountString) {
+            setAccount(JSON.parse(accountString));
+        }
 
         router.replace("/(tabs)/debts");
         setLoading(false);

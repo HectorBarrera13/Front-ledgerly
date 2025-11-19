@@ -45,11 +45,11 @@ export const logoutRequest = async (accessToken: string) => {
 };
 
 export const registerRequest = async (
-    first_name: string,
-    last_name: string,
+    firstName: string,
+    lastName: string,
     email: string,
     password: string,
-    phone: { country_code: string; number: string }
+    phone: { countryCode: string; number: string }
 ) => {
     const response = await api.fetch("/auth/register", {
         method: "POST",
@@ -57,8 +57,8 @@ export const registerRequest = async (
             "X-Client-Type": "mobile",
         },
         body:{
-            first_name,
-            last_name,
+            firstName,
+            lastName,
             email,
             password,
             phone,

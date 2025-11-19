@@ -31,10 +31,10 @@ export function useFriends(limit: number = 5) {
             setError(null);
 
             const data = await friendService.getAll(limit, null);
-            setFriends(data.items);
-            setCursor(data.nextCursor || undefined);
+            setFriends(Array.isArray(data?.items) ? data.items : []);
+            setCursor(data?.nextCursor || undefined);
             setHasMore(
-                data.nextCursor !== undefined && data.nextCursor !== null
+                data?.nextCursor !== undefined && data?.nextCursor !== null
             );
         } catch (error) {
             printDebug(error);
@@ -52,11 +52,12 @@ export function useFriends(limit: number = 5) {
             setError(null);
 
             const data = await friendService.getAll(limit, cursor);
-
-            setFriends((prev) => uniqueById([...prev, ...data.items]));
-            setCursor(data.nextCursor || undefined);
+            setFriends((prev) =>
+                uniqueById([...prev, ...(Array.isArray(data?.items) ? data.items : [])])
+            );
+            setCursor(data?.nextCursor || undefined);
             setHasMore(
-                data.nextCursor !== undefined && data.nextCursor !== null
+                data?.nextCursor !== undefined && data?.nextCursor !== null
             );
         } catch (error) {
             printDebug(error);

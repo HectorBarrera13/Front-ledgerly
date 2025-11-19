@@ -1,4 +1,4 @@
-export interface RefreshResponse {
-    access_token: string;
-    expires_at: string;
-}
+export type RefreshResponse = {
+    accessToken: string;
+    expiresAt: string;
+};

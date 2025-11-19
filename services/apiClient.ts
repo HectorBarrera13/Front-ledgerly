@@ -1,5 +1,5 @@
-// services/apiClient.ts
 import { env } from "@/config/env";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function snakeToCamel(obj: any): any {
     if (obj === null || typeof obj !== "object") return obj;
@@ -58,9 +58,6 @@ class ApiClient {
         };
     }
 
-    /**
-     * Wrapper sobre fetch que agrega baseURL y headers por defecto
-     */
     async fetch(
         endpoint: string,
         options: FetchOptions = {}
@@ -74,18 +71,34 @@ class ApiClient {
             ...fetchOptions
         } = options;
 
-        // Construir URL con query params si existen
         let url = `${this.baseUrl}${endpoint}`;
         if (params) {
             const searchParams = new URLSearchParams(params);
             url += `?${searchParams.toString()}`;
         }
 
-        // Merge headers (los del request sobreescriben los default)
-        const mergedHeaders = {
+        let mergedHeaders = {
             ...this.defaultHeaders,
             ...headers,
         };
+
+        // Solo agrega el access token si NO hay Authorization ya en headers
+        try {
+            const accessToken = await AsyncStorage.getItem("access_token");
+            if (accessToken && !("Authorization" in mergedHeaders)) {
+                mergedHeaders = {
+                    ...mergedHeaders,
+                    Authorization: `Bearer ${accessToken}`,
+                };
+                if (__DEV__) {
+                    console.debug("[APIClient] Usando accessToken:", accessToken);
+                }
+            }
+        } catch (e) {
+            if (__DEV__) {
+                console.debug("[APIClient] No se pudo leer accessToken:", e);
+            }
+        }
 
         let processedBody = body;
         if (body && !skipCaseConversion) {
@@ -115,25 +128,23 @@ class ApiClient {
             return response;
         } catch (err) {
             clearTimeout(id);
-            throw err; // ➜ esto llegará a tu hook useFriends
+            throw err;
         }
     }
 
     private transformResponse(response: Response): Response {
-        // Crea un nuevo Response con json() sobrescrito
         const originalJson = response.json.bind(response);
 
         response.json = async function () {
-            const data = await originalJson();
-            return snakeToCamel(data); // ✅ Auto-convierte
+            const text = await response.text();
+            if (!text) return {};
+            const data = JSON.parse(text);
+            return snakeToCamel(data);
         };
 
         return response;
     }
 
-    /**
-     * Actualizar headers por defecto (útil para agregar token después del login)
-     */
     setHeader(key: string, value: string) {
         this.defaultHeaders = {
             ...this.defaultHeaders,
@@ -141,9 +152,6 @@ class ApiClient {
         };
     }
 
-    /**
-     * Remover un header
-     */
     removeHeader(key: string) {
         const headers = { ...this.defaultHeaders };
         delete headers[key];
@@ -151,8 +159,5 @@ class ApiClient {
     }
 }
 
-// Exportar instancia singleton
 export default new ApiClient(env.apiUrl);
-
-// También exportar la clase
 export { ApiClient };
