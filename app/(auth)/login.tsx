@@ -5,6 +5,7 @@ import { AuthInput } from "@/components/AuthInput";
 import { useAuth } from "@/context/AuthContext";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { isValidEmail, isNotEmpty, isValidPassword } from "@/utils/validation";
 import EmailIcon from "../../assets/icon/icon_mail.svg";
 import PasswordIcon from "../../assets/icon/icon_password.svg";
 
@@ -15,6 +16,18 @@ export default function LoginScreen() {
     const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
+        if ((!isNotEmpty(email) || !isNotEmpty(password))) {
+            Alert.alert("Campos vacíos");
+            return;
+        }
+        if (!isValidEmail(email)) {
+            Alert.alert("Correo inválido", "Por favor ingresa un correo válido.");
+            return;
+        }
+        if (!isValidPassword(password)) {
+            Alert.alert("Contraseña inválida", "La contraseña debe tener al menos 8 caracteres.");
+            return;
+        }
         try {
             setLoading(true);
             await login(email, password);
