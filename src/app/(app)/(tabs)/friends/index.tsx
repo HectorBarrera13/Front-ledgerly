@@ -6,14 +6,6 @@ import AddFriendBar from "@component/friends/addFriendBar";
 import AddFriendModal from "@component/modals/qrFriend";
 import { useState } from "react";
 
-function LoadingState() {
-    return (
-        <View style={styles.centerContent}>
-            <Text style={styles.loadingText}>Cargando amigos...</Text>
-        </View>
-    );
-}
-
 function ErrorState({
     error,
     onRetry,
@@ -59,7 +51,7 @@ function LoadMoreButton({
     );
 }
 
-export default function FriendView() {
+export default function FriendsView() {
     const { friends, loading, error, loadMoreFriends, hasMore, removeFriend } =
         useFriends();
     const [isModalVisible, setModalVisible] = useState(false);
@@ -70,8 +62,6 @@ export default function FriendView() {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Amigos</Text>
-
-            {isInitialLoading && <LoadingState />}
 
             {error && !isInitialLoading && (
                 <ErrorState error={error} onRetry={loadMoreFriends} />

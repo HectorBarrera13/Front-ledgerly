@@ -5,7 +5,7 @@ import { AuthInput } from "@component/AuthInput";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { isValidEmail, isNotEmpty, isValidPassword } from "@/libs/validation";
-import EmailIcon from "@@asset/icon/icon_mail.svg";
+import EmailIcon from "@asset/icon/icon_mail.svg";
 import PasswordIcon from "@asset/icon/icon_password.svg";
 import { authService } from "@service/authService";
 
