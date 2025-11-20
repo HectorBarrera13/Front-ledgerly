@@ -4,7 +4,7 @@ import apiClient, {
     ApiError,
     NetworkError,
     TimeoutError,
-} from "./apiClient";
+} from "@service/apiClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Account } from "@type/Account";
 import { User } from "@type/User";

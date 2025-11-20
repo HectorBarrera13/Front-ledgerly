@@ -1,7 +1,7 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { Friend } from "@type/Friends";
-import FriendCard from "./friendCard";
+import FriendCard from "@component/friends/friendCard";
 
 interface CardFriendProps {
     friends: Friend[];

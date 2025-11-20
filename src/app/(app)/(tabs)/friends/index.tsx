@@ -1,18 +1,10 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
-import { useFriends } from "@/hooks/useFriends";
-import FriendList from "@/components/friends/friendList";
-import AddFriendBar from "@/components/friends/addFriendBar";
-import AddFriendModal from "@/components/modals/qrFriend";
+import { useFriends } from "@hook/useFriends";
+import FriendList from "@component/friends/friendList";
+import AddFriendBar from "@component/friends/addFriendBar";
+import AddFriendModal from "@component/modals/qrFriend";
 import { useState } from "react";
-
-function LoadingState() {
-    return (
-        <View style={styles.centerContent}>
-            <Text style={styles.loadingText}>Cargando amigos...</Text>
-        </View>
-    );
-}
 
 function ErrorState({
     error,
@@ -59,7 +51,7 @@ function LoadMoreButton({
     );
 }
 
-export default function FriendView() {
+export default function FriendsView() {
     const { friends, loading, error, loadMoreFriends, hasMore, removeFriend } =
         useFriends();
     const [isModalVisible, setModalVisible] = useState(false);
@@ -70,8 +62,6 @@ export default function FriendView() {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Amigos</Text>
-
-            {isInitialLoading && <LoadingState />}
 
             {error && !isInitialLoading && (
                 <ErrorState error={error} onRetry={loadMoreFriends} />
@@ -92,7 +82,7 @@ export default function FriendView() {
             )}
             <AddFriendBar
                 onPressGenerateQr={() => setModalVisible(true)}
-                onPressScanQr={() => router.push("modals/qrScanner")}
+                onPressScanQr={() => router.push("")}
             />
             <AddFriendModal
                 visible={isModalVisible}

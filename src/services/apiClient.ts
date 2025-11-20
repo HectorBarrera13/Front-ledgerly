@@ -1,6 +1,6 @@
 // services/apiClient.ts
 import { env } from "@config/env";
-import { camelToSnake, snakeToCamel } from "@/libs/convertBody";
+import { camelToSnake, snakeToCamel } from "@lib/convertBody";
 
 class ApiError extends Error {
     status: number;

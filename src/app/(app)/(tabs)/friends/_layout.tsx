@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 
-export default function ModalLayout() {
+export default function FriendsLayout() {
     return (
         <Stack
             screenOptions={{
