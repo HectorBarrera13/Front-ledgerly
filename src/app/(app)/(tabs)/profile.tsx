@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity } from "react-native";
-import { useAuth } from "@/provider/AuthContext";
-import { authService } from "@/services/authService";
+import { useAuth } from "@provider/AuthContext";
+import { authService } from "@service/authService";
 
 export default function ProfileScreen() {
     const { session } = useAuth();

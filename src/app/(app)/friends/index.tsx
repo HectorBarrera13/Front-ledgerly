@@ -1,9 +1,9 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
-import { useFriends } from "@/hooks/useFriends";
-import FriendList from "@/components/friends/friendList";
-import AddFriendBar from "@/components/friends/addFriendBar";
-import AddFriendModal from "@/components/modals/qrFriend";
+import { useFriends } from "@hook/useFriends";
+import FriendList from "@component/friends/friendList";
+import AddFriendBar from "@component/friends/addFriendBar";
+import AddFriendModal from "@component/modals/qrFriend";
 import { useState } from "react";
 
 function LoadingState() {
