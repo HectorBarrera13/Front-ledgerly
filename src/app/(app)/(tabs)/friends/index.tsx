@@ -82,7 +82,7 @@ export default function FriendsView() {
             )}
             <AddFriendBar
                 onPressGenerateQr={() => setModalVisible(true)}
-                onPressScanQr={() => router.push("modals/qrScanner")}
+                onPressScanQr={() => router.push("")}
             />
             <AddFriendModal
                 visible={isModalVisible}

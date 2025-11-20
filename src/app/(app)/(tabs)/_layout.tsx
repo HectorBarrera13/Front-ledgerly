@@ -7,6 +7,10 @@ export default function TabLayout() {
             <Tabs.Screen name="groups" options={{ title: "Grupos" }} />
             <Tabs.Screen name="profile" options={{ title: "Perfil" }} />
             <Tabs.Screen name="friends" options={{ title: "Amigos" }} />
+            <Tabs.Screen
+                name="notifications"
+                options={{ title: "Notificaciones" }}
+            />
         </Tabs>
     );
 }
