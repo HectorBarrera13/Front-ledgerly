@@ -50,7 +50,7 @@ export interface Session {
     expiresIn: number;
 }
 
-type AuthStateCallback = (session: Session | null) => void;
+type AuthStateCallback = (session: Profile | null) => void;
 
 const REFRESH_THRESHOLD_MS = 3 * 60 * 1000; // 3 minutes
 
@@ -286,7 +286,7 @@ export class AuthService {
         }
     }
 
-    getSession(): Session | null {
+    getSession(): Profile | null {
         if (
             !this.profile ||
             !this.accessToken ||
@@ -298,15 +298,6 @@ export class AuthService {
         console.log(this.profile);
         console.log(this.accessToken);
 
-        return {
-            profile: this.profile,
-            accessToken: this.accessToken,
-            refreshToken: this.refreshToken,
-            expiresIn: this.accessTokenExpiresAt,
-        };
-    }
-
-    getProfile(): Profile | null {
         return this.profile;
     }
 

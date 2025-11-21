@@ -1,10 +1,9 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { router } from "expo-router";
 import { useFriends } from "@hook/useFriends";
 import FriendList from "@component/friends/friendList";
-import AddFriendBar from "@component/friends/addFriendBar";
-import AddFriendModal from "@component/modals/qrFriend";
 import { useState } from "react";
+import ScanButton from "@/components/friends/scanButton";
+import { router } from "expo-router";
 
 function ErrorState({
     error,
@@ -52,48 +51,23 @@ function LoadMoreButton({
 }
 
 export default function FriendsView() {
-    const { friends, loading, error, loadMoreFriends, hasMore, removeFriend } =
-        useFriends();
-    const [isModalVisible, setModalVisible] = useState(false);
-
-    const isInitialLoading = loading && friends.length === 0;
-    const hasNoFriends = friends.length === 0 && !loading;
-
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Amigos</Text>
-
-            {error && !isInitialLoading && (
-                <ErrorState error={error} onRetry={loadMoreFriends} />
-            )}
-
-            {hasNoFriends && !error && <EmptyState />}
-
-            {friends.length > 0 && (
-                <>
-                    <FriendList friends={friends} onRemove={removeFriend} />
-                    {hasMore && (
-                        <LoadMoreButton
-                            loading={loading}
-                            onPress={loadMoreFriends}
-                        />
-                    )}
-                </>
-            )}
-            <AddFriendBar
-                onPressGenerateQr={() => setModalVisible(true)}
-                onPressScanQr={() => router.push("")}
-            />
-            <AddFriendModal
-                visible={isModalVisible}
-                onClose={() => setModalVisible(false)}
-            />
+            <View style={styles.scanButton}>
+                <ScanButton
+                    style={{ width: "35%" }}
+                    title="Escanear QR"
+                    onPress={() => {
+                        router.push("scanQr");
+                    }}
+                />
+            </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {},
+    container: { flex: 1, padding: 16 },
     title: {},
     centerContent: {},
     description: {},
@@ -104,4 +78,12 @@ const styles = StyleSheet.create({
     retryText: {},
     loadMoreButton: {},
     loadMoreText: {},
+    scanButton: {
+        position: "absolute",
+        bottom: 40,
+        left: 0,
+        right: 0,
+        alignItems: "center", // Centra el botón horizontalmente
+        height: 48, // Opional: para darle un espacio
+    },
 });

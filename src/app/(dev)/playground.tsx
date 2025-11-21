@@ -2,10 +2,10 @@ import { Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import FriendCard from "@component/friends/friendCard";
 import FriendList from "@component/friends/friendList";
-import AddFriendBar from "@component/friends/addFriendBar";
 import SmallModal from "@/components/modals/messageModal";
 import { Button } from "@component/Button";
 import { useState } from "react";
+import IconWithTitle from "@/components/headers/IconWIthTitle";
 
 export default function Playground() {
     const [modalVisible, setModalVisible] = useState(false);
@@ -36,43 +36,7 @@ export default function Playground() {
 
     return (
         <SafeAreaView style={{ flex: 1, padding: 20 }}>
-            <Text style={{ fontSize: 22, marginBottom: 20 }}>
-                Playground de componentes
-            </Text>
-            <Text style={{ marginBottom: 10 }}>FriendCard ejemplo:</Text>
-            <FriendCard
-                friend={{
-                    id: "123",
-                    firstName: "Jane",
-                    lastName: "Smith",
-                    phone: "987-654-3210",
-                    addedAt: "2024-06-01T12:00:00Z",
-                }}
-                onRemove={() => console.log("Remove pressed")}
-                onPress={() => console.log("Card pressed")}
-            />
-            <Text style={{ marginTop: 20 }}> FriendList ejemplo:</Text>
-            <FriendList
-                friends={data}
-                onRemove={(id) => console.log("Remove pressed", id)}
-                onPress={(id) => console.log("Card pressed", id)}
-            />
-            <Text style={{ marginTop: 20 }}> AddFriendBar ejemplo:</Text>
-            <AddFriendBar
-                onPressGenerateQr={() => console.log("Generar QR pressed")}
-                onPressScanQr={() => console.log("Escanear QR pressed")}
-            />
-            <Text style={{ marginTop: 20 }}> SmallModal ejemplo:</Text>
-            <SmallModal
-                title="Aviso"
-                text="Esta es una alerta pequeña"
-                visible={modalVisible}
-                onClose={() => setModalVisible(false)}
-            />
-            <Button
-                title="Botón de ejemplo"
-                onPress={() => setModalVisible(true)}
-            />
+            <Text>Playground Screen</Text>
         </SafeAreaView>
     );
 }

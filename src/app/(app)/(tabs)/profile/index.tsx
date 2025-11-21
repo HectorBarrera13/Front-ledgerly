@@ -1,11 +1,13 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text } from "react-native";
 import { useAuth } from "@provider/AuthContext";
 import { authService } from "@service/authService";
+import { Pressable } from "react-native";
+import { router } from "expo-router";
 
 export default function ProfileView() {
-    const { session } = useAuth();
-    const user = session?.profile.user;
-    const email = session?.profile.account.email;
+    const { profile } = useAuth();
+    const user = profile?.user;
+    const email = profile?.account.email;
     const isLoading = false;
 
     const onLogout = async () => {
@@ -35,8 +37,17 @@ export default function ProfileView() {
                     <Text style={{ fontSize: 16 }}>Phone: {user.phone}</Text>
                 )}
             </View>
+            <Text style={{ fontSize: 16, marginBottom: 20 }}>
+                <Pressable
+                    onPress={() => {
+                        router.push("/playground");
+                    }}
+                >
+                    <Text style={{ color: "blue" }}>Go To playground</Text>
+                </Pressable>
+            </Text>
 
-            <TouchableOpacity
+            <Pressable
                 onPress={onLogout}
                 disabled={isLoading}
                 style={{
@@ -49,7 +60,7 @@ export default function ProfileView() {
                 <Text style={{ color: "white", fontWeight: "bold" }}>
                     {isLoading ? "Logging out..." : "Logout"}
                 </Text>
-            </TouchableOpacity>
+            </Pressable>
         </View>
     );
 }
