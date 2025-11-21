@@ -96,6 +96,11 @@ export default function LoginScreen() {
                         ¡Haz click aquí!
                     </Text>
                 </View>
+                <View>
+                    <Text style={styles.forgotLink} onPress={() => {}}>
+                        Press to redirect pages
+                    </Text>
+                </View>
                 <Button
                     title={loading ? "Cargando..." : "Iniciar sesión"}
                     onPress={handleLogin}
@@ -111,7 +116,7 @@ export default function LoginScreen() {
                 </Text>
                 <Button
                     title="Regístrate"
-                    onPress={() => router.push("/(auth)/signup")}
+                    onPress={() => router.push("signup")}
                     style={styles.registerButton}
                     textStyle={styles.registerButtonText}
                 />

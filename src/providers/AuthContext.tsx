@@ -2,18 +2,17 @@
 import React, { createContext, useEffect, useContext, useReducer } from "react";
 import { router, useRootNavigationState, useSegments } from "expo-router";
 import { SplashScreen } from "expo-router";
-
-import { Session } from "@service/authService";
 import { authService } from "@service/authService";
+import { Profile } from "@/types/LoginResponse";
 
 type AuthData = {
     isLoading: boolean;
-    session: Session | null;
+    profile: Profile | null;
 };
 
 const AuthContext = createContext<AuthData>({
     isLoading: true,
-    session: null,
+    profile: null,
 });
 
 interface Props {
@@ -22,56 +21,79 @@ interface Props {
 
 type AuthState = {
     isLoading: boolean;
-    session: Session | null;
+    profile: Profile | null;
     initialCheckDone: boolean;
 };
 
 type AuthAction =
-    | { type: "RESTORE_SESSION"; session: Session | null }
-    | { type: "UPDATE_SESSION"; session: Session | null };
+    | { type: "RESTORE_PROFILE"; profile: Profile | null }
+    | { type: "UPDATE_PROFILE"; profile: Profile | null };
 
 const initialState: AuthState = {
     isLoading: true,
-    session: null,
+    profile: null,
     initialCheckDone: false,
 };
 
 function authReducer(state: AuthState, action: AuthAction): AuthState {
+    console.log("Reducer action:", action);
+    console.log("Current state before action:", state);
+    console.log("Profile on reducer:", state.profile);
+    console.log("Profile on action:", action.profile);
     switch (action.type) {
-        case "RESTORE_SESSION":
+        case "RESTORE_PROFILE":
             return {
                 ...state,
-                session: action.session,
+                profile: action.profile,
                 isLoading: false,
                 initialCheckDone: true,
             };
-        case "UPDATE_SESSION":
+        case "UPDATE_PROFILE":
             return {
                 ...state,
-                session: action.session,
+                profile: action.profile,
             };
         default:
             return state;
     }
 }
 
+const MOCKED_PROFILE: Profile = {
+    account: {
+        id: "account_123",
+        email: "mocked@example.com",
+    },
+    user: {
+        id: "user_123",
+        firstName: "Mocked",
+        lastName: "User",
+        phone: "1234567890",
+    },
+};
+
+const USE_MOCKED_PROFILE = true;
+
 export default function AuthProvider(props: Props) {
     const [state, dispatch] = useReducer(authReducer, initialState);
-    const { session, isLoading, initialCheckDone } = state;
+    const { profile, isLoading, initialCheckDone } = state;
     const segments = useSegments();
     const ready = useRootNavigationState();
 
     useEffect(() => {
-        async function fetchSession() {
+        async function fetchProfile() {
             try {
-                const currentSession = await authService.getSession();
+                const currentProfile = USE_MOCKED_PROFILE
+                    ? MOCKED_PROFILE
+                    : await authService.getSession();
+                console.log("Fetched profile:", currentProfile);
                 dispatch({
-                    type: "RESTORE_SESSION",
-                    session: currentSession,
+                    type: "RESTORE_PROFILE",
+                    profile: currentProfile,
                 });
+                console.log("Dispatched RESTORE_PROFILE: " + profile);
             } catch (error) {
-                console.error("Error fetching session:", error);
-                dispatch({ type: "RESTORE_SESSION", session: null });
+                console.error("Error fetching profile:", error);
+                dispatch({ type: "RESTORE_PROFILE", profile: null });
             } finally {
                 SplashScreen.hideAsync().catch((err) => {
                     console.error("Error hiding splash screen:", err);
@@ -79,16 +101,20 @@ export default function AuthProvider(props: Props) {
             }
         }
 
-        fetchSession();
+        fetchProfile();
+        if (!USE_MOCKED_PROFILE) {
+            authService.onAuthStateChanged((newProfile) => {
+                dispatch({
+                    type: "UPDATE_PROFILE",
+                    profile: newProfile,
+                });
+            });
 
-        authService.onAuthStateChanged((newSession) => {
-            dispatch({ type: "UPDATE_SESSION", session: newSession });
-        });
-
-        // Cleanup
-        return () => {
-            authService.unsubscribe();
-        };
+            // Cleanup
+            return () => {
+                authService.unsubscribe();
+            };
+        }
     }, []);
 
     useEffect(() => {
@@ -98,19 +124,23 @@ export default function AuthProvider(props: Props) {
         const isRootRoute = (segments.length as number) === 0;
         const isAuthRoute = segments[0] === "(auth)";
 
-        if (session) {
+        console.log(profile);
+
+        if (profile) {
+            console.log("User is authenticated, redirecting to /debts");
             if (isAuthRoute || isRootRoute) {
                 router.replace("/(tabs)/debts");
             }
         } else {
+            console.log("User is not authenticated, redirecting to /login");
             if (!isAuthRoute || isRootRoute) {
-                router.replace("/(auth)/login");
+                router.replace("/login");
             }
         }
-    }, [initialCheckDone, session, segments, ready]);
+    }, [initialCheckDone, profile, segments, ready]);
 
     return (
-        <AuthContext.Provider value={{ isLoading, session }}>
+        <AuthContext.Provider value={{ isLoading, profile }}>
             {props.children}
         </AuthContext.Provider>
     );
