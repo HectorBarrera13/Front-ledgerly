@@ -1,6 +1,6 @@
 import { View, Text, Button } from "react-native";
 import { useEffect } from "react";
-import { useQr } from "@/hooks/useQrFriend";
+import { useQr } from "@/hooks/useQrFriendScanner";
 import { Image } from "react-native";
 
 interface AddFriendModalProps {

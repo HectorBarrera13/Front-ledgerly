@@ -3,6 +3,7 @@ import { useAuth } from "@provider/AuthContext";
 import { authService } from "@service/authService";
 import { Button } from "@/components/Button";
 import { StyleSheet } from "react-native";
+import { router } from "expo-router";
 
 export default function ProfileView() {
     const { profile } = useAuth();
@@ -58,7 +59,7 @@ export default function ProfileView() {
             <View style={styles.actionsContainer}>
                 <Button
                     title="Generar mi QR"
-                    onPress={onLogout}
+                    onPress={() => router.push("generateQr")}
                     style={styles.qrButton}
                 />
                 <Button

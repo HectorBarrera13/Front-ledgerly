@@ -47,6 +47,7 @@ export default function BinaryModal(props: BinaryModalProps) {
                                 props.firstButtonStyle || {
                                     ...styles.button,
                                     backgroundColor: "#f8653cff",
+                                    width: "100%",
                                 }
                             }
                             onPress={props.onPressFirst}
@@ -60,6 +61,7 @@ export default function BinaryModal(props: BinaryModalProps) {
                                 props.secondButtonStyle || {
                                     ...styles.button,
                                     backgroundColor: "#0ac78eff",
+                                    width: "100%",
                                 }
                             }
                             onPress={props.onPressSecond}

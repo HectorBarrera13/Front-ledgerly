@@ -46,6 +46,7 @@ const friendService = {
 
     add: async (id: string): Promise<Friend> => {
         try {
+            console.log("Adding friend with ID:", id);
             return await api.post<Friend>(`/friends/${id}`);
         } catch (error) {
             if (error instanceof ApiError) {

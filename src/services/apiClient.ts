@@ -155,7 +155,14 @@ class ApiClient {
                 ? { Authorization: `Bearer ${this.accessToken}` }
                 : {}),
         };
-        return fetch(url, { ...requestInit, headers });
+        const response = await fetch(url, { ...requestInit, headers });
+        if (!response.ok) {
+            throw new ApiError(
+                `HTTP error! status: ${response.status}`,
+                response.status
+            );
+        }
+        return response;
     }
 
     post<R>(endpoint: string, data: any, options?: FetchOptions): Promise<R>;

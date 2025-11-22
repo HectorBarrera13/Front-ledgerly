@@ -53,7 +53,6 @@ export default function CameraQr(props: CameraQrProps) {
         );
     }
 
-    // Si YA tiene permisos, mostrar la cámara
     return (
         <CameraView
             style={styles.camera}
