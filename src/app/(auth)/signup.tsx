@@ -125,7 +125,10 @@ export default function SignupScreen() {
                 title="Crear Cuenta"
                 onPress={handleRegister}
                 disabled={loading || !acceptPolicy}
-                style={styles.registerButton}
+                style={[
+                    styles.registerButton,
+                    !acceptPolicy && { opacity: 0.8 },
+                ]}
                 textStyle={styles.registerButtonText}
             />
         </View>

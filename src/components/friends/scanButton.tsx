@@ -5,6 +5,7 @@ import {
     StyleProp,
     ViewStyle,
 } from "react-native";
+import { Button } from "@component/Button";
 
 interface ScanButtonProps {
     title: string;
@@ -20,19 +21,18 @@ export default function ScanButton({
     style,
 }: ScanButtonProps) {
     return (
-        <TouchableOpacity
+        <Button
             onPress={onPress}
             style={[styles.button, style]}
             disabled={disabled}
         >
             <Text style={styles.text}>{title}</Text>
-        </TouchableOpacity>
+        </Button>
     );
 }
 
 const styles = StyleSheet.create({
     button: {
-        width: "45%",
         height: 48,
         backgroundColor: "#661AE6",
         borderRadius: 85,
