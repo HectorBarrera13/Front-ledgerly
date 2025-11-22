@@ -1,71 +1,75 @@
-// scanQr.tsx
-import { StyleSheet, Text, View } from "react-native";
+import { Text, View, StyleSheet, Image } from "react-native";
 import IconLedgerly from "@asset/icon/icon_ledgerly.svg";
-import CameraQr from "@/components/cameraQr";
-import { useEffect, useState } from "react";
 import BinaryModal from "@/components/BinaryModal";
 import { router } from "expo-router";
-import { useQrFriendScanner } from "@/hooks/useQrFriendScanner";
-
-export default function ScanQrView() {
+import { useEffect, useState } from "react";
+import { useQrFriendGenerator } from "@/hooks/useQrFriendGenerator";
+export default function GenerateQRView() {
     const {
-        scanning,
-        qrResult,
-        scanError,
-        startScanning,
-        addFriendFromQr,
-        resetScanning,
-    } = useQrFriendScanner();
+        generateQrCode,
+        resetGeneratedQr,
+        generatedQrError,
+        generatedQr,
+        generatingQr,
+    } = useQrFriendGenerator();
     const [retryModalVisible, setRetryModalVisible] = useState(false);
 
     useEffect(() => {
-        if (scanning && qrResult) {
-            addFriendFromQr();
-        }
-    }, [qrResult]);
+        generateQrCode();
+    }, []);
 
     useEffect(() => {
-        if (scanError && !retryModalVisible) {
+        if (generatedQrError) {
             setRetryModalVisible(true);
         }
-    }, [scanError]);
+    }, [generatedQrError]);
 
-    const onRetry = () => {
+    const onRetry = async () => {
         setRetryModalVisible(false);
-        resetScanning();
+        resetGeneratedQr();
+        await generateQrCode();
+    };
+
+    const onCancel = () => {
+        setRetryModalVisible(false);
+        router.back();
     };
 
     return (
         <View style={styles.container}>
             <View style={styles.box}>
-                <View style={styles.qrCamera}>
-                    {retryModalVisible ? null : (
-                        <CameraQr onScan={startScanning} />
-                    )}
+                <View style={styles.qrContainer}>
+                    {generatingQr ? (
+                        <Text>Cargando código QR...</Text>
+                    ) : generatedQr ? (
+                        <Image
+                            source={{ uri: generatedQr }}
+                            style={{ width: 350, height: 350 }}
+                        />
+                    ) : null}
                 </View>
                 <Text style={styles.instruction}>
-                    ¡Escanea el QR de tus amigos para añadirlos!
+                    ¡Muestra este código QR a tus amigos para que puedan
+                    agregarte fácilmente!
                 </Text>
                 <IconLedgerly style={styles.icon} />
             </View>
             <BinaryModal
                 visible={retryModalVisible}
-                title={scanError ? scanError.title : "Error desconocido"}
+                title={
+                    generatedQrError
+                        ? generatedQrError.title
+                        : "Error desconocido"
+                }
                 description={
-                    scanError
-                        ? scanError.description
+                    generatedQrError
+                        ? generatedQrError.description
                         : "Ha ocurrido un error desconocido."
                 }
                 buttonTextFirst="Cancelar"
                 buttonTextSecond="Reintentar"
-                onPressFirst={() => {
-                    setRetryModalVisible(false);
-                    router.back();
-                }}
-                onPressSecond={() => {
-                    setRetryModalVisible(false);
-                    onRetry();
-                }}
+                onPressFirst={onCancel}
+                onPressSecond={onRetry}
             />
         </View>
     );
@@ -85,12 +89,11 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         padding: 20,
         width: 350,
-        height: 600,
+        height: 500,
     },
-    qrCamera: {
+    qrContainer: {
         width: 300,
-        height: 450,
-        borderRadius: 20,
+        height: 300,
         overflow: "hidden",
         justifyContent: "center",
         alignItems: "center",
@@ -104,6 +107,6 @@ const styles = StyleSheet.create({
     },
     icon: {
         position: "absolute",
-        bottom: 20,
+        bottom: 30,
     },
 });

@@ -1,19 +1,21 @@
-import React from "react";
+import React, { useRef } from "react";
 import {
-    TouchableOpacity,
     Text,
     StyleSheet,
     ViewStyle,
     TextStyle,
     StyleProp,
+    Pressable,
+    Animated,
 } from "react-native";
 
 interface Props {
-    title: string;
+    title?: string;
     onPress: () => void;
     disabled?: boolean;
     style?: StyleProp<ViewStyle>;
     textStyle?: StyleProp<TextStyle>;
+    children?: React.ReactNode;
 }
 
 export const Button = ({
@@ -22,28 +24,78 @@ export const Button = ({
     disabled,
     style,
     textStyle,
+    children,
 }: Props) => {
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+    const opacityAnim = useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = () => {
+        Animated.parallel([
+            Animated.spring(scaleAnim, {
+                toValue: 0.95,
+                useNativeDriver: true,
+                speed: 50,
+                bounciness: 4,
+            }),
+            Animated.timing(opacityAnim, {
+                toValue: 0.85,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    };
+
+    const handlePressOut = () => {
+        Animated.parallel([
+            Animated.spring(scaleAnim, {
+                toValue: 1,
+                useNativeDriver: true,
+                speed: 50,
+                bounciness: 4,
+            }),
+            Animated.timing(opacityAnim, {
+                toValue: 1,
+                duration: 150,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    };
+
     return (
-        <TouchableOpacity
+        <Pressable
             onPress={onPress}
-            style={[styles.button, style]}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
             disabled={disabled}
         >
-            <Text style={[styles.text, textStyle]}>{title}</Text>
-        </TouchableOpacity>
+            <Animated.View
+                style={[
+                    styles.button,
+                    {
+                        transform: [{ scale: scaleAnim }],
+                        opacity: opacityAnim,
+                    },
+                    style,
+                ]}
+            >
+                {children ? (
+                    children
+                ) : (
+                    <Text style={[styles.text, textStyle]}>{title}</Text>
+                )}
+            </Animated.View>
+        </Pressable>
     );
 };
 
 const styles = StyleSheet.create({
     button: {
-        width: "85%",
-        height: 48,
-        backgroundColor: "#661AE6",
+        backgroundColor: "#7519EB",
         borderRadius: 85,
         alignItems: "center",
         justifyContent: "center",
-        alignSelf: "center",
-        marginVertical: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 24,
     },
     text: {
         color: "#fff",
