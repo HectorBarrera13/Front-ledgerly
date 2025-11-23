@@ -25,12 +25,8 @@ const friendService = {
                         description:
                             "La solicitud para obtener la lista de amigos es inválida.",
                     },
-                    404: {
-                        title: "Amigos no encontrados",
-                        description: "No se encontraron amigos en tu lista.",
-                    },
                     default: {
-                        title: "Error inesperado",
+                        title: "Ops!",
                         description:
                             "Ocurrió un error inesperado al obtener la lista de amigos.",
                     },
@@ -46,7 +42,6 @@ const friendService = {
 
     add: async (id: string): Promise<Friend> => {
         try {
-            console.log("Adding friend with ID:", id);
             return await api.post<Friend>(`/friends/${id}`);
         } catch (error) {
             if (error instanceof ApiError) {
@@ -65,7 +60,7 @@ const friendService = {
                         description: "Este amigo ya está en tu lista.",
                     },
                     default: {
-                        title: "Error inesperado",
+                        title: "Ops!",
                         description:
                             "Ocurrió un error inesperado al añadir amigo.",
                     },
@@ -94,7 +89,7 @@ const friendService = {
                         description: "No se encontró un amigo con ese ID.",
                     },
                     default: {
-                        title: "Error inesperado",
+                        title: "Ops!",
                         description:
                             "Ocurrió un error inesperado al eliminar amigo.",
                     },
@@ -126,7 +121,7 @@ const friendService = {
                         description: "No se encontró el código QR.",
                     },
                     default: {
-                        title: "Error inesperado",
+                        title: "Ops!",
                         description:
                             "Ocurrió un error inesperado al cargar el código QR.",
                     },

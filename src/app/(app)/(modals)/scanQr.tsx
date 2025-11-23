@@ -8,21 +8,10 @@ import { router } from "expo-router";
 import { useQrFriendScanner } from "@/hooks/useQrFriendScanner";
 
 export default function ScanQrView() {
-    const {
-        scanning,
-        qrResult,
-        scanError,
-        startScanning,
-        addFriendFromQr,
-        resetScanning,
-    } = useQrFriendScanner();
+    const { scanError, startScanning, resetScanning, scanned } =
+        useQrFriendScanner();
     const [retryModalVisible, setRetryModalVisible] = useState(false);
-
-    useEffect(() => {
-        if (scanning && qrResult) {
-            addFriendFromQr();
-        }
-    }, [qrResult]);
+    const [returnedFromBackground, setReturnedFromBackground] = useState(false);
 
     useEffect(() => {
         if (scanError && !retryModalVisible) {
@@ -33,6 +22,19 @@ export default function ScanQrView() {
     const onRetry = () => {
         setRetryModalVisible(false);
         resetScanning();
+    };
+
+    const onCancel = () => {
+        setRetryModalVisible(false);
+        router.back();
+    };
+
+    const onSuccess = () => {
+        router.push({
+            pathname: "/friends",
+            params: { reload: "true" },
+        });
+        setReturnedFromBackground(true);
     };
 
     return (
@@ -58,14 +60,17 @@ export default function ScanQrView() {
                 }
                 buttonTextFirst="Cancelar"
                 buttonTextSecond="Reintentar"
-                onPressFirst={() => {
-                    setRetryModalVisible(false);
-                    router.back();
-                }}
-                onPressSecond={() => {
-                    setRetryModalVisible(false);
-                    onRetry();
-                }}
+                onPressFirst={onCancel}
+                onPressSecond={onRetry}
+            />
+            <BinaryModal
+                visible={scanned && !returnedFromBackground}
+                title="¡Amigo añadido!"
+                description="Has añadido un nuevo amigo exitosamente."
+                buttonTextFirst="Cerrar"
+                buttonTextSecond="Añadir otro"
+                onPressFirst={onSuccess}
+                onPressSecond={onRetry}
             />
         </View>
     );

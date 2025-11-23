@@ -36,10 +36,6 @@ const initialState: AuthState = {
 };
 
 function authReducer(state: AuthState, action: AuthAction): AuthState {
-    console.log("Reducer action:", action);
-    console.log("Current state before action:", state);
-    console.log("Profile on reducer:", state.profile);
-    console.log("Profile on action:", action.profile);
     switch (action.type) {
         case "RESTORE_PROFILE":
             return {
@@ -71,7 +67,7 @@ const MOCKED_PROFILE: Profile = {
     },
 };
 
-const USE_MOCKED_PROFILE = true;
+const USE_MOCKED_PROFILE = false;
 
 export default function AuthProvider(props: Props) {
     const [state, dispatch] = useReducer(authReducer, initialState);
@@ -85,14 +81,11 @@ export default function AuthProvider(props: Props) {
                 const currentProfile = USE_MOCKED_PROFILE
                     ? MOCKED_PROFILE
                     : await authService.getSession();
-                console.log("Fetched profile:", currentProfile);
                 dispatch({
                     type: "RESTORE_PROFILE",
                     profile: currentProfile,
                 });
-                console.log("Dispatched RESTORE_PROFILE: " + profile);
             } catch (error) {
-                console.error("Error fetching profile:", error);
                 dispatch({ type: "RESTORE_PROFILE", profile: null });
             } finally {
                 SplashScreen.hideAsync().catch((err) => {
@@ -124,15 +117,11 @@ export default function AuthProvider(props: Props) {
         const isRootRoute = (segments.length as number) === 0;
         const isAuthRoute = segments[0] === "(auth)";
 
-        console.log(profile);
-
         if (profile) {
-            console.log("User is authenticated, redirecting to /debts");
             if (isAuthRoute || isRootRoute) {
                 router.replace("/(tabs)/debts");
             }
         } else {
-            console.log("User is not authenticated, redirecting to /login");
             if (!isAuthRoute || isRootRoute) {
                 router.replace("/login");
             }

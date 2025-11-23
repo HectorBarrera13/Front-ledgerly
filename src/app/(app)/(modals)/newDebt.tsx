@@ -4,7 +4,6 @@ import Input from "@/components/Input";
 import { Button } from "@/components/Button";
 import { useRouter } from "expo-router";
 
-
 export default function NewDebtScreen() {
     const router = useRouter();
     const [concept, setConcept] = useState("");
@@ -22,7 +21,10 @@ export default function NewDebtScreen() {
         <View style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.title}>Nueva deuda</Text>
-                <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
+                <TouchableOpacity
+                    style={styles.closeBtn}
+                    onPress={() => router.back()}
+                >
                     <Text style={styles.closeText}>✕</Text>
                 </TouchableOpacity>
             </View>
@@ -56,7 +58,6 @@ export default function NewDebtScreen() {
         </View>
     );
 }
-
 
 const styles = StyleSheet.create({
     container: {

@@ -1,121 +1,95 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import friendService from "@service/friendService";
 import { Friend } from "@type/Friends";
+import { PresentableError } from "@/types/Errors";
 
-export function useFriends(limit: number = 5) {
+export function useFriends(limit: number = 8) {
     const [friends, setFriends] = useState<Friend[]>([]);
     const [loading, setLoading] = useState(false);
-    const [cursor, setCursor] = useState<string | undefined>(undefined);
-    const [error, setError] = useState<string | null>(null);
-    const [hasMore, setHasMore] = useState(true);
+    const [cursor, setCursor] = useState<string | null>(null);
+    const [error, setError] = useState<PresentableError | null>(null);
 
-    const uniqueById = <T extends { id: string }>(items: T[]): T[] => {
-        return Array.from(
-            new Map(items.map((item) => [item.id, item])).values()
-        );
-    };
+    const initialFetchDone = useRef(false);
 
-    useEffect(() => {
-        loadInitialFriends();
-    }, []);
-
-    const printDebug = (error: any) => {
-        if (__DEV__) {
-            console.error("[useFriends]", error);
-        }
-    };
-
-    const loadInitialFriends = useCallback(async () => {
-        try {
+    const fetchFriends = useCallback(
+        async (
+            limit: number,
+            cursor: string | null,
+            append: boolean = false
+        ) => {
             setLoading(true);
-            setError(null);
-
-            const data = await friendService.getAll(limit, null);
-            if (data) {
-                setFriends(data.items);
-                setCursor(data.nextCursor || undefined);
-                setHasMore(
-                    data.nextCursor !== undefined && data.nextCursor !== null
-                );
-            }
-        } catch (error) {
-            printDebug(error);
-            setError(
-                error instanceof Error
-                    ? error.message
-                    : "Failed to load friends"
-            );
-        } finally {
-            setLoading(false);
-        }
-    }, [limit]);
-
-    const loadMoreFriends = useCallback(async () => {
-        if (loading || !hasMore || cursor === undefined) return;
-
-        try {
-            setLoading(true);
-            setError(null);
-
-            const data = await friendService.getAll(limit, cursor);
-            if (data) {
-                setFriends((prev) => uniqueById([...prev, ...data.items]));
-                setCursor(data.nextCursor || undefined);
-                setHasMore(
-                    data.nextCursor !== undefined && data.nextCursor !== null
-                );
-            }
-        } catch (error) {
-            printDebug(error);
-            setError(
-                error instanceof Error
-                    ? error.message
-                    : "Failed to load more friends"
-            );
-        } finally {
-            setLoading(false);
-        }
-    }, [limit, loading, hasMore, cursor]);
-
-    const addFriend = useCallback(async (id: string) => {
-        try {
-            const newFriend = await friendService.add(id);
-            setFriends((prev) => uniqueById([newFriend, ...prev]));
-        } catch (error) {
-            printDebug(error);
-            setError(
-                error instanceof Error ? error.message : "Failed to add friend"
-            );
-        }
-    }, []);
-
-    const removeFriend = useCallback(
-        async (id: string) => {
-            const previousFriends = friends;
             try {
-                setFriends((prev) => prev.filter((f) => f.id !== id));
-                await friendService.remove(id);
-            } catch (error) {
-                setFriends(previousFriends);
-                printDebug(error);
-                setError(
-                    error instanceof Error
-                        ? error.message
-                        : "Failed to remove friend"
+                const response = await friendService.getAll(limit, cursor);
+                if (!response) {
+                    return;
+                }
+                setFriends((prevFriends) =>
+                    append
+                        ? [...prevFriends, ...response.items]
+                        : response.items
                 );
+                setCursor(response.nextCursor);
+                setError(null);
+            } catch (err) {
+                const presentableError =
+                    err instanceof PresentableError
+                        ? err
+                        : new PresentableError(
+                              "Error inesperado",
+                              "Ocurrió un error inesperado al obtener la lista de amigos."
+                          );
+                setError(presentableError);
+            } finally {
+                setLoading(false);
             }
         },
-        [friends]
+        []
     );
+
+    const initFetch = useCallback(async () => {
+        if (initialFetchDone.current) return;
+        await fetchFriends(limit, null);
+        initialFetchDone.current = true;
+    }, []);
+
+    const loadMore = useCallback(async () => {
+        if (loading || !cursor) return;
+        fetchFriends(limit, cursor, true);
+    }, [cursor, friends, limit]);
+
+    const refreshFriends = useCallback(async () => {
+        await fetchFriends(limit, null);
+    }, []);
+
+    const removeFriend = useCallback(async (friendId: string) => {
+        try {
+            await friendService.remove(friendId);
+            setFriends((prevFriends) =>
+                prevFriends.filter((friend) => friend.id !== friendId)
+            );
+        } catch (err) {
+            const presentableError =
+                err instanceof PresentableError
+                    ? err
+                    : new PresentableError(
+                          "Error inesperado",
+                          "Ocurrió un error inesperado al eliminar al amigo."
+                      );
+            setError(presentableError);
+        }
+    }, []);
+
+    useEffect(() => {
+        initFetch();
+    }, []);
 
     return {
         friends,
         loading,
-        hasMore,
         error,
-        addFriend,
+        hasMore: !!cursor,
+        loadMore,
+        refreshFriends,
         removeFriend,
-        loadMoreFriends,
-        refresh: loadInitialFriends,
     };
 }

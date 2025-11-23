@@ -4,36 +4,32 @@ import { BarcodeScanningResult } from "expo-camera";
 import { PresentableError } from "@/types/Errors";
 
 export function useQrFriendScanner() {
-    const [qrResult, setQrResult] = useState<string | null>(null);
+    const [scanning, setScanning] = useState(false);
+    const [scanned, setScanned] = useState(false);
     const [scanError, setScanError] = useState<PresentableError | null>(null);
-    const [addingFriend, setAddingFriend] = useState(false);
 
-    const startScanning = (result: BarcodeScanningResult) => {
-        if (qrResult) return;
-
+    const startScanning = async (result: BarcodeScanningResult) => {
+        if (scanning || scanned) return; // Prevent multiple scans
+        setScanned(false);
+        setScanning(true);
         if (result?.data) {
-            setQrResult(result.data);
-            setScanError(null);
+            await addFriendFromQr(result.data);
         }
+        setScanning(false);
     };
 
     const resetScanning = () => {
-        setQrResult(null);
         setScanError(null);
-        setAddingFriend(false);
+        setScanning(false);
+        setScanned(false);
     };
 
-    const addFriendFromQr = async () => {
-        if (!qrResult) return;
-
+    const addFriendFromQr = async (qrData: string) => {
+        if (scanned) return;
         try {
-            setAddingFriend(true);
-            setScanError(null);
-            console.log("QR Result:", qrResult);
-            await friendService.add(qrResult);
-            setQrResult(null);
+            await friendService.add(qrData);
+            setScanned(true);
         } catch (error) {
-            console.error("Error adding friend from QR:", error);
             const presentableError =
                 error instanceof PresentableError
                     ? error
@@ -43,20 +39,16 @@ export function useQrFriendScanner() {
                       );
             setScanError(presentableError);
         } finally {
-            setAddingFriend(false);
+            setScanning(false);
         }
     };
 
     return {
-        // Scan states
-        qrResult,
         scanError,
-        addingFriend,
-        scanning: !!qrResult, // Computed value
+        scanned,
 
         // Scan actions
         startScanning,
-        addFriendFromQr,
         resetScanning,
     };
 }
