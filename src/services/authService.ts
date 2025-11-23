@@ -147,12 +147,10 @@ export class AuthService {
                 error instanceof TimeoutError ||
                 (error instanceof ApiError && error.status === 400)
             ) {
-                console.error("Network error during token refresh:", error);
                 setTimeout(() => {
                     this.refreshAccessToken();
                 }, 10000); // Retry after 10 seconds
             } else {
-                console.error("Failed to refresh access token:", error);
                 this.clearSession();
             }
         }
@@ -183,7 +181,6 @@ export class AuthService {
 
             this.notifyAuthStateChanged();
         } catch (error) {
-            console.error("Failed to clear session:", error);
             throw new AuthError("Failed to clear session", "STORAGE_ERROR");
         }
     }
@@ -221,7 +218,6 @@ export class AuthService {
             this.scheduleTokenRefresh();
             this.notifyAuthStateChanged();
         } catch (error) {
-            console.error("Failed to set session:", error);
             this.clearSession();
             throw new AuthError("Failed to set session", "STORAGE_ERROR");
         }
@@ -295,8 +291,6 @@ export class AuthService {
         ) {
             return null;
         }
-        console.log(this.profile);
-        console.log(this.accessToken);
 
         return this.profile;
     }
@@ -315,7 +309,6 @@ export class AuthService {
                 "/auth/register",
                 data
             );
-            console.log("Sign-up response:", response);
             await this.setSession(response);
             return;
         } catch (error: any) {
