@@ -1,14 +1,16 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Debt } from "@type/Debt";
+import StatusIcon from "@asset/icon/icon_status.svg";
 
 interface CardDebtProps {
     debt: Debt;
     onSettle?: (id: string) => void;
+    onPress?: (id: string) => void;
 }
 
-export const CardDebt: React.FC<CardDebtProps> = ({ debt, onSettle }) => (
-    <View style={styles.card}>
+export const CardDebt: React.FC<CardDebtProps> = ({ debt, onSettle, onPress }) => (
+    <TouchableOpacity style={styles.card} activeOpacity={0.95} onPress={() => onPress?.(debt.id)}>
         <View style={styles.row}>
             <View>
                 <Text style={styles.title}>{debt.title}</Text>
@@ -23,13 +25,13 @@ export const CardDebt: React.FC<CardDebtProps> = ({ debt, onSettle }) => (
         </View>
         <TouchableOpacity
             style={styles.settleBtn}
-            onPress={() => onSettle && onSettle(debt.id)}
+            onPress={() => onSettle?.(debt.id)}
             activeOpacity={0.8}
         >
-            <Text style={styles.checkIcon}>✔️</Text>
-            <Text style={styles.settleText}>Marcar como saldada</Text>
+            <StatusIcon width={22} height={22} style={styles.checkIcon} />
+            <Text style={styles.settleText}>Estatus</Text>
         </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
@@ -72,7 +74,7 @@ const styles = StyleSheet.create({
     checkIcon: {
         fontSize: 22,
         marginRight: 8,
-        color: "#6C1AEF",
+        opacity: 0.9,
     },
     settleText: {
         color: "#6C1AEF",
@@ -80,3 +82,5 @@ const styles = StyleSheet.create({
         fontSize: 17,
     },
 });
+
+export default CardDebt;

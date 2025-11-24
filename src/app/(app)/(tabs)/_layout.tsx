@@ -9,6 +9,7 @@ export default function TabLayout() {
                 name="debts"
                 options={{
                     title: "Deudas",
+                    headerShown: false,
                     headerTitleStyle: {
                         ...headerStyles.title,
                         display: "none",

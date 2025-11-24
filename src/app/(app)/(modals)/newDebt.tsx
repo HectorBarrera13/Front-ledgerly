@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import Input from "@/components/Input";
 import { Button } from "@/components/Button";
 import { useRouter } from "expo-router";
+import CloseButton from "@/components/CloseButton";
 
 
 export default function NewDebtScreen() {
@@ -22,9 +23,7 @@ export default function NewDebtScreen() {
         <View style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.title}>Nueva deuda</Text>
-                <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
-                    <Text style={styles.closeText}>✕</Text>
-                </TouchableOpacity>
+                <CloseButton style={styles.closeBtn} onPress={() => router.back()} />
             </View>
             <Input
                 label="Concepto"

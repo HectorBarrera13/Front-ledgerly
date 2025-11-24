@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import DebtInfo from "@/components/debts/DebtInfo";
 import Input from "@/components/Input";
 import { Button } from "@/components/Button";
+import CloseButton from "@/components/CloseButton";
 
 export default function FinishDebtScreen() {
     const router = useRouter();
@@ -26,12 +27,7 @@ export default function FinishDebtScreen() {
         >
             <View style={styles.header}>
                 <Text style={styles.title}>Nueva deuda</Text>
-                <TouchableOpacity
-                    style={styles.closeBtn}
-                    onPress={() => router.replace("/debts")}
-                >
-                    <Text style={styles.closeText}>✕</Text>
-                </TouchableOpacity>
+                <CloseButton style={styles.closeBtn} onPress={() => router.replace("/debts")} />
             </View>
             <DebtInfo
                 concept={String(concept)}
@@ -68,6 +64,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#f5f5f5",
         padding: 16,
     },
+    
     header: {
         flexDirection: "row",
         alignItems: "center",
