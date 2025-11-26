@@ -20,8 +20,8 @@ const ButtonAdd = ({ onPress, style, disabled }: Props) => (
 
 const styles = StyleSheet.create({
     button: {
-        width: 100,
-        height: 100,
+        width: 55,
+        height: 55,
         borderRadius: 50,
         backgroundColor: "#9B6AF7",
         alignItems: "center",
@@ -35,9 +35,12 @@ const styles = StyleSheet.create({
     },
     plus: {
         color: "#fff",
-        fontSize: 56,
-        fontWeight: "bold",
+        fontSize: 50,
         lineHeight: 64,
+        alignContent: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        marginTop: -5,
     },
 });
 

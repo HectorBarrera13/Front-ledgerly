@@ -16,9 +16,12 @@ const DebtInfo: React.FC<DebtInfoProps> = ({ concept, description, amount }) => 
                     <Text style={styles.desc}>{description}</Text>
                 </View>
                 <View style={styles.amountContainer}>
-                    <Text style={styles.amount}>${amount.toFixed(2)}</Text>
-                    <Text style={styles.montoLabel}>Monto</Text>
+                    <View style={styles.amountInnerContainer}>
+                        <Text style={styles.amount}>${amount.toFixed(2)}</Text>
+                        <Text style={styles.montoLabel}>Monto</Text>
+                    </View>
                 </View>
+                
             </View>
         </View>
     );
@@ -27,9 +30,9 @@ const DebtInfo: React.FC<DebtInfoProps> = ({ concept, description, amount }) => 
 const styles = StyleSheet.create({
     card: {
         backgroundColor: "#6C1ED6",
-        borderRadius: 32,
-        padding: 24,
-        margin: 12,
+        borderRadius: 23,
+        padding: 28,
+        margin: 8,
     },
     row: {
         flexDirection: "row",
@@ -37,13 +40,13 @@ const styles = StyleSheet.create({
     },
     concept: {
         color: "#fff",
-        fontSize: 32,
+        fontSize: 22,
         fontWeight: "bold",
         marginBottom: 12,
     },
     desc: {
         color: "#fff",
-        fontSize: 20,
+        fontSize: 18,
         marginTop: 8,
     },
     amountContainer: {
@@ -51,14 +54,18 @@ const styles = StyleSheet.create({
         justifyContent: "flex-end",
         flex: 1,
     },
+    amountInnerContainer: {
+        alignItems: "center",
+        justifyContent: "center",
+    },
     amount: {
         color: "#fff",
-        fontSize: 36,
+        fontSize: 25,
         fontWeight: "bold",
     },
     montoLabel: {
         color: "#fff",
-        fontSize: 20,
+        fontSize: 18,
         marginTop: 4,
     },
 });
