@@ -1,4 +1,5 @@
 import React, { useRef } from "react";
+
 import {
     Text,
     StyleSheet,
@@ -38,7 +39,7 @@ export const Button = ({
                 bounciness: 4,
             }),
             Animated.timing(opacityAnim, {
-                toValue: 0.85,
+                toValue: 0.5,
                 duration: 100,
                 useNativeDriver: true,
             }),
@@ -49,9 +50,9 @@ export const Button = ({
         Animated.parallel([
             Animated.spring(scaleAnim, {
                 toValue: 1,
+                friction: 3,
+                tension: 40,
                 useNativeDriver: true,
-                speed: 50,
-                bounciness: 4,
             }),
             Animated.timing(opacityAnim, {
                 toValue: 1,

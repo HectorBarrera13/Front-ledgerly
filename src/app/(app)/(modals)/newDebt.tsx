@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import Input from "@/components/Input";
-import {Button} from "@/components/Button";
 
 export default function NewDebtScreen() {
     const router = useRouter();
@@ -35,7 +33,10 @@ export default function NewDebtScreen() {
         <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
             <View style={styles.header}>
                 <Text style={styles.title}>Nueva deuda</Text>
-                <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
+                <TouchableOpacity
+                    style={styles.closeBtn}
+                    onPress={() => router.back()}
+                >
                     <Text style={styles.closeText}>✕</Text>
                 </TouchableOpacity>
             </View>
@@ -124,12 +125,5 @@ const styles = StyleSheet.create({
     },
     continueText: {
         fontSize: 20,
-    },
-    warningText: {
-        color: "#d9534f",
-        fontSize: 14,
-        marginBottom: 8,
-        marginTop: 4,
-        marginLeft: 4,
     },
 });

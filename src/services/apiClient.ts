@@ -112,12 +112,8 @@ class ApiClient {
             if (contentType && contentType.includes("application/json")) {
                 // La respuesta tiene contenido JSON, analízalo.
                 const responseData = await response.json();
-                console.log("Datos analizados:", responseData);
                 return snakeToCamel(responseData) as R;
             } else {
-                console.log(
-                    "Respuesta vacía o no es JSON, retornando null/vacío."
-                );
                 return null as unknown as R;
             }
         } catch (error) {
@@ -136,7 +132,6 @@ class ApiClient {
             // fetch lanza un TypeError genérico cuando no puede conectar
             else {
                 // Opcional: puedes loguear el error original para debug
-                // console.error("Error de red original:", error);
                 throw new NetworkError();
             }
         } finally {
