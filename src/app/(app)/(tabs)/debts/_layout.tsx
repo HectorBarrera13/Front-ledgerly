@@ -12,7 +12,6 @@ export default function DebtsLayout() {
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F5F7' }}>
 
-            {/* light gray background for the app content area; header and tab bar stay white */}
             <View style={{ height: 64, paddingLeft: 16, alignItems: 'flex-start', justifyContent: 'center', backgroundColor: '#ffffff' }}>
                 <IconLedgerly style={{ width: 140, height: 36 }} />
             </View>

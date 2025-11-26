@@ -1,16 +1,9 @@
 import { Stack } from "expo-router";
 
 export default function ModalsLayout() {
-    return (
-        <Stack
-            screenOptions={{
-                presentation: "modal",
-                animation: "slide_from_bottom",
-                gestureDirection: "vertical",
-                headerShown: false,
-            }}
-        >
-            <Stack.Screen
+  return (
+    <Stack>
+        <Stack.Screen
                 name="scanQr"
                 options={{
                     headerTitleAlign: "center",
@@ -21,15 +14,21 @@ export default function ModalsLayout() {
                 }}
             />
             <Stack.Screen
-                name="generateQr"
+                name="newDebt"
                 options={{
                     headerTitleAlign: "center",
-                    headerShown: true,
-                    headerLeft: () => null,
-                    headerRight: () => null,
-                    title: "QR Personal",
+                    headerShown: false,
+                    title: "Nueva Deuda",
                 }}
             />
-        </Stack>
-    );
+            <Stack.Screen
+                name="finishDebt"
+                options={{
+                    headerTitleAlign: "center",
+                    headerShown: false,
+                    title: "Finalizar",
+                }}
+            />
+      </Stack>
+  );
 }

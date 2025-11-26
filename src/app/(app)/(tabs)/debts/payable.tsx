@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useState, useCallBack}  from "react";
 import { View, StyleSheet } from "react-native";
 import ButtonAdd from "@/components/ButtonAdd";
-import { useRouter } from "expo-router";
-import CardDebt from "@/components/debts/DebtCard";
+import { useRouter, useFocusEffect } from "expo-router";
+import CardDebt from "@/components/debts/debtCard";
  
 
 export default function PayableView() {
     const router = useRouter();
+    const [isNavigating, setIsNavigating] = useState(false); 
+
 
     const exampleDebt = {
         id: "d1",
@@ -14,6 +16,19 @@ export default function PayableView() {
         creditor: "Franchesco",
         amount: 12345.67,
     };
+
+    const handleAddPress = () => {
+        if (!isNavigating) {
+            setIsNavigating(true);
+            router.push("(modals)/newDebt");
+        }
+    };
+
+    {useFocusEffect(
+        React.useCallback(() => {
+            setIsNavigating(false);
+        }, [])
+    );}
 
     return (
         <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
@@ -26,7 +41,7 @@ export default function PayableView() {
             </View>
 
             <View style={styles.addBtnContainer}>
-                <ButtonAdd onPress={() => router.push("(modals)/newDebt")} />
+                <ButtonAdd onPress={handleAddPress} disabled={isNavigating} />
             </View>
         </View>
     );

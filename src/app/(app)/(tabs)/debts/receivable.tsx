@@ -1,18 +1,31 @@
-import React from "react";
+import React, { useState, useCallBack} from "react";
 import { View, StyleSheet } from "react-native";
 import ButtonAdd from "@/components/ButtonAdd";
-import { useRouter } from "expo-router";
-import CardDebt from "@/components/debts/DebtCard";
+import { useRouter, useFocusEffect } from "expo-router";
+import CardDebt from "@/components/debts/debtCard";
 
 export default function ReceivableView() {
     const router = useRouter();
-
+        const [isNavigating, setIsNavigating] = useState(false); 
     const exampleDebt = {
         id: "r1",
         title: "Pago por servicio",
         creditor: "Ana",
         amount: 850.5,
     };
+
+    const handleAddPress = () => {
+        if (!isNavigating) {
+            setIsNavigating(true);
+        router.push("(modals)/newDebt");
+        }
+    };
+
+    {useFocusEffect(
+        React.useCallback(() => {
+            setIsNavigating(false);
+        }, [])
+    );}
 
     return (
         <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>

@@ -1,29 +1,43 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import Input from "@/components/Input";
-import { Button } from "@/components/Button";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import CloseButton from "@/components/CloseButton";
-
+import Input from "@/components/Input";
+import {Button} from "@/components/Button";
 
 export default function NewDebtScreen() {
     const router = useRouter();
     const [concept, setConcept] = useState("");
     const [amount, setAmount] = useState("");
     const [description, setDescription] = useState("");
+    const [amountWarning, setAmountWarning] = useState(false);
+
+    const canContinue = concept.trim() !== "" && amount.trim() !== "" && description.trim() !== "";
+
+    const handleAmountChange = (text: string) => {
+        if (/[^0-9.]/.test(text)) {
+            setAmountWarning(true);
+        } else {
+            setAmountWarning(false);
+        }
+        const numericText = text.replace(/[^0-9.]/g, "");
+        setAmount(numericText);
+    };
 
     const handleContinue = () => {
         router.push({
-            pathname: "finish",
+            pathname: "finishDebt",
             params: { concept, amount, description },
         });
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
             <View style={styles.header}>
                 <Text style={styles.title}>Nueva deuda</Text>
-                <CloseButton style={styles.closeBtn} onPress={() => router.back()} />
+                <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
+                    <Text style={styles.closeText}>✕</Text>
+                </TouchableOpacity>
             </View>
             <Input
                 label="Concepto"
@@ -34,10 +48,15 @@ export default function NewDebtScreen() {
             <Input
                 label="Monto"
                 value={amount}
-                onChangeText={setAmount}
+                onChangeText={handleAmountChange}
                 keyboardType="numeric"
                 style={styles.input}
             />
+            {amountWarning && (
+                <Text style={styles.warningText}>
+                    Solo puedes ingresar números y punto decimal.
+                </Text>
+            )}
             <Input
                 label="Descripción"
                 value={description}
@@ -49,13 +68,13 @@ export default function NewDebtScreen() {
             <Button
                 title="Continuar"
                 onPress={handleContinue}
-                style={styles.continueBtn}
+                disabled={!canContinue}
+                style={[styles.continueBtn, !canContinue && { backgroundColor: "#bbb" }]}
                 textStyle={styles.continueText}
             />
-        </View>
+        </SafeAreaView>
     );
 }
-
 
 const styles = StyleSheet.create({
     container: {
@@ -105,5 +124,12 @@ const styles = StyleSheet.create({
     },
     continueText: {
         fontSize: 20,
+    },
+    warningText: {
+        color: "#d9534f",
+        fontSize: 14,
+        marginBottom: 8,
+        marginTop: 4,
+        marginLeft: 4,
     },
 });

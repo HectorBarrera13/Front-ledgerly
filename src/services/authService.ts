@@ -50,6 +50,16 @@ export interface Session {
     expiresIn: number;
 }
 
+export interface NewDebtPayload {
+    purpose: string;
+    description?: string | null;
+    currency: string;
+    amount: number;
+    myRole: "CREDITOR" | "DEBTOR";
+    targetUserName: string;
+}
+
+
 type AuthStateCallback = (session: Profile | null) => void;
 
 const REFRESH_THRESHOLD_MS = 3 * 60 * 1000; // 3 minutes
@@ -376,6 +386,31 @@ export class AuthService {
             throw new AuthError(
                 error.message || "Error al actualizar el perfil",
                 "UPDATE_PROFILE_ERROR",
+                error.status
+            );
+        }
+    }
+
+
+    async newDebtQuick(data: NewDebtPayload): Promise<void> {
+        try {
+            await this.api.post("/quick-debt", data);
+        } catch (error: any) {
+            throw new AuthError(
+                error.message || "Error al crear la deuda",
+                "NEW_DEBT_ERROR",
+                error.status
+            );
+        }
+    }
+
+    async newDebtBetweenUsers(data: NewDebtPayload): Promise<void> {
+        try {
+            await this.api.post("/debts-between-users", data);
+        } catch (error: any) {
+            throw new AuthError(
+                error.message || "Error al crear la deuda entre usuarios",
+                "NEW_DEBT_BETWEEN_USERS_ERROR",
                 error.status
             );
         }
