@@ -9,18 +9,38 @@ interface CardDebtProps {
     onPress?: (id: string) => void;
 }
 
+const formatAmount = (amount: number) => {
+    if (amount >= 1_000_000) {
+        return `$${(amount / 1_000_000).toFixed(2)}M`;
+    }
+    return amount.toLocaleString("es-MX", {
+        style: "currency",
+        currency: "MXN",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+};
+
+const formatTitle = (title: string) => {
+    if (title.length > 14) {
+        return title.slice(0, 13) + "...";
+    }
+    return title;
+};
+
 export const CardDebt: React.FC<CardDebtProps> = ({ debt, onSettle, onPress }) => (
     <TouchableOpacity style={styles.card} activeOpacity={0.95} onPress={() => onPress?.(debt.id)}>
         <View style={styles.row}>
-            <View>
-                <Text style={styles.title}>{debt.title}</Text>
+            <View style={styles.titleContainer}>
+                <Text
+                    style={styles.title}
+                >
+                    {formatTitle(debt.title)}
+                </Text>
                 <Text style={styles.creditor}>{debt.creditor}</Text>
             </View>
             <Text style={styles.amount}>
-                {debt.amount.toLocaleString("es-MX", {
-                    style: "currency",
-                    currency: "MXN",
-                })}
+                {formatAmount(debt.amount)}
             </Text>
         </View>
         <TouchableOpacity
@@ -47,6 +67,9 @@ const styles = StyleSheet.create({
         alignItems: "flex-start",
         marginBottom: 16,
     },
+    titleContainer: {
+        maxWidth: 180,
+    },
     title: {
         color: "#fff",
         fontSize: 22,
@@ -61,6 +84,9 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 28,
         fontWeight: "bold",
+        marginLeft: 8,
+        minWidth: 70,
+        textAlign: "right",
     },
     settleBtn: {
         flexDirection: "row",

@@ -4,6 +4,7 @@ import { authService } from "@service/authService";
 import { Button } from "@/components/Button";
 import { StyleSheet } from "react-native";
 import { router } from "expo-router";
+import debtService  from "@/services/debtService";
 
 export default function ProfileView() {
     const { profile } = useAuth();
@@ -22,6 +23,14 @@ export default function ProfileView() {
         const first = user?.firstName?.charAt(0) || "";
         const last = user?.lastName?.charAt(0) || "";
         return `${first}${last}`.toUpperCase();
+    };
+    const handleFetchDebts = async () => {
+        try {
+            const result = await debtService.fetchQuickDebts("DEBTOR", "PENDING");
+            console.log("Debts JSON:", result);
+        } catch (error) {
+            console.log("Error fetching debts:", error);
+        }
     };
 
     return (
@@ -67,6 +76,12 @@ export default function ProfileView() {
                     onPress={onLogout}
                     style={styles.logoutButton}
                     textStyle={styles.logoutButtonText}
+                />
+                <Button
+                    title="Ir a Playground"
+                    onPress={handleFetchDebts}
+                    style={{ backgroundColor: "#6C1ED6", marginTop: 8 }}
+                    textStyle={{ color: "white" }}
                 />
             </View>
         </ScrollView>

@@ -29,6 +29,14 @@ export default function ModalsLayout() {
                     title: "Finalizar",
                 }}
             />
+            <Stack.Screen
+                name="debtDetails"
+                options={{
+                    headerTitleAlign: "center",
+                    headerShown: false,
+                    title: "Detalles de la Deuda",
+                }}
+            />
       </Stack>
   );
 }
