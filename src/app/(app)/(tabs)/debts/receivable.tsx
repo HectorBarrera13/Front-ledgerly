@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, StyleSheet, RefreshControl, FlatList } from "react-native";
 import ButtonAdd from "@/components/ButtonAdd";
 import { useRouter } from "expo-router";
@@ -7,6 +7,7 @@ import CardDebt from "@/components/debts/debtCard";
 
 export default function ReceivableView() {
     const router = useRouter();
+    const [isNavigating, setIsNavigating] = useState(false); 
     const debtsBetween = useDebts("betweenUsers", "CREDITOR", "PENDING");
     const debtsQuick = useDebts("quick", "CREDITOR", "PENDING");
 
@@ -33,6 +34,14 @@ export default function ReceivableView() {
         debtsQuick.refresh();
     };
 
+    const handleAddPress = () => {
+        if (!isNavigating) {
+            setIsNavigating(true);
+            router.push("(modals)/newDebt");
+            setTimeout(() => setIsNavigating(false), 1000); 
+        }
+    };
+
     return (
         <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
             <FlatList
@@ -50,7 +59,7 @@ export default function ReceivableView() {
                 }
             />
             <View style={styles.addBtnContainer}>
-                <ButtonAdd onPress={() => router.push("(modals)/newDebt")} />
+                <ButtonAdd onPress={handleAddPress} disabled={isNavigating} />
             </View>
         </View>
     );
