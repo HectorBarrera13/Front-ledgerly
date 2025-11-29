@@ -1,153 +1,164 @@
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import DebtInfo from "@component/debts/DebtInfo";
-import { Button } from "@component/Button";
+import DebtInfo from "@/components/debts/DebtInfo";
+import {Button} from "@/components/Button";
 import CloseButton from "@/components/CloseButton";
+import debtService from "@/services/debtService";
 
 export default function DebtDetailScreen() {
-  const { id, mode } = useLocalSearchParams();
-  const router = useRouter();
+    const { id, mode, type } = useLocalSearchParams();
+    const router = useRouter();
+    const [debt, setDebt] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-  // provisional para testeo
-  const debt = {
-    id,
-    concept: "Cena del viernes",
-    description: "Dividimos la cuenta entre todos los de la mesa.",
-    amount: 450,
-    creditor: "Daniela",
-    debtor: "Edwin",
-  };
+    useEffect(() => {
+        const fetchDebt = async () => {
+            setLoading(true);
+            try {
+                let result;
+                if (type === "betweenUsers") {
+                    result = await debtService.fetchDebtsBetweenUsersById(id as string);
+                } else {
+                    result = await debtService.fetchQuickDebtById(id as string);
+                }
+                setDebt(result);
+            } catch (error) {
+                setDebt(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+        if (id) fetchDebt();
+    }, [id, type]);
 
-  console.log("MODE IS:", mode);
+    if (loading) {
+        return (
+            <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <ActivityIndicator size="large" color="#6C1ED6" />
+            </SafeAreaView>
+        );
+    }
 
-  const finalMode = mode || "";
+    if (!debt) {
+        return (
+            <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <Text>No se encontró la deuda.</Text>
+            </SafeAreaView>
+        );
+    }
 
-  const decodedMessage = finalMode === "receivable"
-    ? "¡La deuda será marcada como saldada cuando el deudor confirme el pago!"
-    : "¡La deuda será marcada como pagada cuando el acreedor confirme el pago!";
+    const isBetween = debt.debtorSummary && debt.creditorSummary;
+    const concept = debt.purpose;
+    const description = debt.description;
+    const amount = debt.amount;
+    const status = debt.status;
+    let userLabel = "";
+    let userName = "";
 
-  const decodedTitle = finalMode === "receivable"
-    ? "Hemos notificado al deudor"
-    : "Hemos notificado al acreedor";
+    if (isBetween) {
+        if (mode === "receivable") {
+            userLabel = "Deudor";
+            userName = `${debt.debtorSummary.firstName} ${debt.debtorSummary.lastName}`;
+        } else {
+            userLabel = "Acreedor";
+            userName = `${debt.creditorSummary.firstName} ${debt.creditorSummary.lastName}`;
+        }
+    } else {
+        userLabel = "Usuario";
+        userName = debt.targetUserName ?? "";
+    }
 
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+    const finalMode = mode || "";
 
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Deuda por {finalMode === "receivable" ? "cobrar" : "pagar"}</Text>
-        <CloseButton style={styles.closeButton} />
-      </View>
+    const decodedMessage = finalMode === "receivable"
+        ? "¡La deuda será marcada como saldada cuando el deudor confirme el pago!"
+        : "¡La deuda será marcada como pagada cuando el acreedor confirme el pago!";
 
-      <DebtInfo
-        concept={debt.concept}
-        description={debt.description}
-        amount={debt.amount}
-      />
+    const decodedTitle = finalMode === "receivable"
+        ? "Hemos notificado al deudor"
+        : "Hemos notificado al acreedor";
 
-      {/* Show 'Acreedor' when viewing debts 'por pagar' and 'Deudor' when 'por cobrar' */}
-      <Text style={styles.sectionTitle}>{finalMode === "receivable" ? "Deudor" : "Acreedor"}</Text>
-      <View style={styles.inputBox}>
-        <Text style={styles.inputText}>{finalMode === 'receivable' ? debt.debtor : debt.creditor}</Text>
-      </View>
+    return (
+        <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+            <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>Deuda por {finalMode === "receivable" ? "cobrar" : "pagar"}</Text>
+                    <CloseButton style={styles.closeButton} />
+                </View>
 
-      <Text style={styles.sectionTitle}>Estatus</Text>
-      <View style={styles.inputBox}>
-        <Text style={styles.inputText}>Estatus de la deuda</Text>
-      </View>
+                <DebtInfo
+                    concept={concept}
+                    description={description}
+                    amount={amount}
+                />
 
-      <View style={{ height: 12 }} />
+                <Text style={styles.sectionTitle}>{userLabel}</Text>
+                <View style={styles.inputBox}>
+                    <Text style={styles.inputText}>{userName}</Text>
+                </View>
 
-      <Button
-        title={finalMode === "receivable" ? "Marcar como saldada" : "Marcar como pagada"}
-        onPress={() => {
-          const title = encodeURIComponent(decodedTitle);
-          const message = encodeURIComponent(decodedMessage);
-          router.push(`(modals)/successNotification?title=${title}&message=${message}`);
-        }}
-        style={styles.payButton}
-      />
+                <Text style={styles.sectionTitle}>Estatus</Text>
+                <View style={styles.inputBox}>
+                    <Text style={styles.inputText}>{status}</Text>
+                </View>
 
-    </ScrollView>
-  );
+                <View style={{ height: 12 }} />
+
+                <Button
+                    title={finalMode === "receivable" ? "Marcar como saldada" : "Marcar como pagada"}
+                    onPress={() => {
+                        const title = encodeURIComponent(decodedTitle);
+                        const message = encodeURIComponent(decodedMessage);
+                        router.push(`(modals)/successNotification?title=${title}&message=${message}`);
+                    }}
+                    style={styles.payButton}
+                />
+            </ScrollView>
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingTop: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#f7f7f7'
-  },
-  header: {
-    height: 64,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-    flexDirection: 'row',
-    paddingHorizontal: 12,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#6C1ED6',
-    justifyContent: 'center',
-    flex: 1,
-    textAlign: 'center',
-  },
-  closeButton: {
-    position: 'absolute',
-    right: 12,
-    top: 20,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#e6e6e6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeText: {
-    color: '#444',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  section: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    color: '#6C1ED6',
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  inputBox: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#d6d6d6',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  inputText: {
-    fontSize: 16,
-    color: '#333'
-  },
-  label: {
-    color: '#555',
-    fontWeight: 'bold',
-    marginBottom: 6,
-  },
-  value: {
-    fontSize: 20,
-  },
-  payButton: {
-    backgroundColor: '#6C1ED6',
-    borderRadius: 30,
-    width: '100%',
-    paddingVertical: 14,
-    marginTop: 6,
-  },
+    container: {
+        flex: 1,
+        backgroundColor: "#fff",
+        padding: 16,
+    },
+    header: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 24,
+    },
+    headerTitle: {
+        fontSize: 22,
+        fontWeight: "bold",
+        color: "#6C1ED6",
+    },
+    closeButton: {
+        marginLeft: 8,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: "bold",
+        marginTop: 24,
+        marginBottom: 8,
+        color: "#333",
+    },
+    inputBox: {
+        backgroundColor: "#F5F5F7",
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 8,
+    },
+    inputText: {
+        fontSize: 16,
+        color: "#333",
+    },
+    payButton: {
+        marginTop: 24,
+        backgroundColor: "#6C1ED6",
+    },
 });

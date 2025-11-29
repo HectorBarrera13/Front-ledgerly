@@ -1,45 +1,63 @@
-import React, { useState, useCallBack}  from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { View, StyleSheet, RefreshControl, FlatList } from "react-native";
 import ButtonAdd from "@/components/ButtonAdd";
-import { useRouter, useFocusEffect } from "expo-router";
+import { useRouter } from "expo-router";
+import { useDebts } from "@/hooks/useDebts";
 import CardDebt from "@/components/debts/debtCard";
- 
 
 export default function PayableView() {
     const router = useRouter();
     const [isNavigating, setIsNavigating] = useState(false); 
+    const debtsBetween = useDebts("betweenUsers", "DEBTOR", "PENDING");
+    const debtsQuick = useDebts("quick", "DEBTOR", "PENDING");
 
+    const mappedDebts = [
+        ...debtsBetween.debts.map((debt: any) => ({
+            id: debt.id,
+            title: debt.purpose,
+            creditor: debt.creditorSummary
+                ? `${debt.creditorSummary.firstName} ${debt.creditorSummary.lastName}`
+                : debt.targetUserName ?? "",
+            amount: debt.amount,
+        })),
+        ...debtsQuick.debts.map((debt: any) => ({
+            id: debt.id,
+            title: debt.purpose,
+            creditor: debt.targetUserName ?? "",
+            amount: debt.amount,
+        })),
+    ];
 
-    const exampleDebt = {
-        id: "d1",
-        title: "Cena del viernes",
-        creditor: "Franchesco",
-        amount: 12345.67,
+    const loading = debtsBetween.loading || debtsQuick.loading;
+    const refresh = () => {
+        debtsBetween.refresh();
+        debtsQuick.refresh();
     };
 
     const handleAddPress = () => {
         if (!isNavigating) {
             setIsNavigating(true);
             router.push("(modals)/newDebt");
+            setTimeout(() => setIsNavigating(false), 1000); 
         }
     };
 
-    {useFocusEffect(
-        React.useCallback(() => {
-            setIsNavigating(false);
-        }, [])
-    );}
-
     return (
         <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
-            <View style={styles.container}>
-                <CardDebt
-                    debt={exampleDebt}
-                    onPress={(id) => router.push(`(modals)/debtDetails?id=${id}&mode=payable`)}
-                    onSettle={(id) => router.push(`(modals)/debtDetails?id=${id}&mode=payable`)}
-                />
-            </View>
-
+            <FlatList
+                data={mappedDebts}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                    <CardDebt
+                        debt={item}
+                        onPress={() => router.push(`(modals)/debtDetails?id=${item.id}&mode=payable`)}
+                    />
+                )}
+                contentContainerStyle={styles.container}
+                refreshControl={
+                    <RefreshControl refreshing={loading} onRefresh={refresh} />
+                }
+            />
             <View style={styles.addBtnContainer}>
                 <ButtonAdd onPress={handleAddPress} disabled={isNavigating} />
             </View>
