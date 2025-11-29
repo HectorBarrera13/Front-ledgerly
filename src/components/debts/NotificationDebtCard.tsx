@@ -57,17 +57,17 @@ const NotificationDebtCard: React.FC<NotificationDebtCardProps> = ({
             <View style={styles.actions}>
                 <Button
                     title="Aceptar"
-                    onPress={async () => {
-                        await debtService.acceptDebtBetweenUsers(debt.id);
+                    onPress={() => {
+                        
                         onAccept?.(debt.id);
-                    }}
+                  }}
                     style={styles.acceptBtn}
                     textStyle={{color:"#000"}}
                 />
                 <Button
                     title="Rechazar"
-                    onPress={async () => {
-                        await debtService.rejectDebtBetweenUsers(debt.id);
+                    onPress={() => {
+                        
                         onReject?.(debt.id);
                     }}
                     style={styles.rejectBtn}
