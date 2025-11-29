@@ -6,6 +6,7 @@ import DebtInfo from "@/components/debts/DebtInfo";
 import {Button} from "@/components/Button";
 import CloseButton from "@/components/CloseButton";
 import debtService from "@/services/debtService";
+import { DebtStatusText } from "@/types/Debt";
 
 export default function DebtDetailScreen() {
     const { id, mode, type } = useLocalSearchParams();
@@ -33,28 +34,24 @@ export default function DebtDetailScreen() {
         if (id) fetchDebt();
     }, [id, type]);
 
-    // Handler para el deudor: reportar pago (deuda entre personas)
     const handleReportPayment = async () => {
         await debtService.reportDebtPayment(debt.id);
         setDebt({ ...debt, status: "PAYMENT_CONFIRMATION_PENDING" });
         router.push(`(modals)/successNotification?title=¡Listo!&message=Hemos notificado al acreedor`);
     };
 
-    // Handler para el acreedor: confirmar pago (deuda entre personas)
     const handleVerifyPayment = async () => {
         await debtService.verifyDebtPayment(debt.id);
         setDebt({ ...debt, status: "PAYMENT_CONFIRMED" });
         router.push(`(modals)/successNotification?title=¡Pago confirmado!&message=La deuda ha sido saldada`);
     };
 
-    // Handler para el acreedor: rechazar pago (deuda entre personas)
     const handleRejectPayment = async () => {
         await debtService.rejectDebtPayment(debt.id);
         setDebt({ ...debt, status: "PAYMENT_CONFIRMATION_REJECTED" });
         router.push(`(modals)/successNotification?title=Pago rechazado&message=El pago fue rechazado`);
     };
 
-    // Handler para deuda rápida: confirmar pago directo
     const handleQuickConfirm = async () => {
         await debtService.verifyDebtPayment(debt.id);
         setDebt({ ...debt, status: "PAYMENT_CONFIRMED" });
@@ -81,7 +78,7 @@ export default function DebtDetailScreen() {
     const concept = debt.purpose;
     const description = debt.description;
     const amount = debt.amount;
-    const status = debt.status;
+    const status = debt.status as keyof typeof DebtStatusText;
     let userLabel = "";
     let userName = "";
 
@@ -121,7 +118,7 @@ export default function DebtDetailScreen() {
 
                 <Text style={styles.sectionTitle}>Estatus</Text>
                 <View style={styles.inputBox}>
-                    <Text style={styles.inputText}>{status}</Text>
+                    <Text style={styles.inputText}>{DebtStatusText[status] ?? status}</Text>
                 </View>
 
                 <View style={{ height: 12 }} />
@@ -151,6 +148,23 @@ export default function DebtDetailScreen() {
                     </View>
                 )}
 
+                {(status === "PENDING" || status === "REJECTED") && (
+                    <Button
+                        title="Editar deuda"
+                                onPress={() => {
+                                    if (!debt.id) {
+                                        console.log("ERROR: debt.id is undefined", debt);
+                                        return;
+                                    }
+                                    router.push({
+                                        pathname: "editDebt",
+                                        params: { id: debt.id, type, mode }
+                                    });
+                                }}
+                                style={[styles.payButton, { backgroundColor: "#555" }]}
+                    />
+                )}
+
                 {/* Deuda rápida: botón para marcar como pagada/saldada, cambia directo a confirmado */}
                 {type === "quick" && (finalMode === "payable" || finalMode === "receivable") && status !== "PAYMENT_CONFIRMED" && (
                     <Button
@@ -171,6 +185,7 @@ export default function DebtDetailScreen() {
                         Pago rechazado
                     </Text>
                 )}
+
             </ScrollView>
         </SafeAreaView>
     );

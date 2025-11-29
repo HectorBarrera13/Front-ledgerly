@@ -49,6 +49,14 @@ const debtService = {
     rejectDebtPayment: async (debtId: string) => {
         return await api.post(`/debt-between-users/${debtId}/reject-payment`);
     },
+    
+    editQuickDebt: async (debtId: string, data: Partial<QuickDebt>) => {
+        return await api.patch(`/quick-debt/${debtId}`, data);
+    },
+
+    editDebtBetweenUsers: async (debtId: string, data: Partial<DebtBetweenUsers>) => {
+        return await api.patch(`/debt-between-users/${debtId}`, data);
+    },
 };
 
 export default debtService;

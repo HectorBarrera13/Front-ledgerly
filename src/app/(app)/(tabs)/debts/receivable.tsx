@@ -11,9 +11,14 @@ export default function ReceivableView() {
     const [isNavigating, setIsNavigating] = useState(false); 
     const debtsBetweenPending = useDebts("betweenUsers", "CREDITOR", "PENDING");
     const debtsBetweenAccepted = useDebts("betweenUsers", "CREDITOR", "ACCEPTED");
+    const debtsBetweenRejected = useDebts("betweenUsers", "CREDITOR", "REJECTED");
+    const debtsBetweenPaymentPending = useDebts("betweenUsers", "CREDITOR", "PAYMENT_CONFIRMATION_PENDING");
+    const debtsBetweenPaymentRejected = useDebts("betweenUsers", "CREDITOR", "PAYMENT_CONFIRMATION_REJECTED");
+
     const debtsQuick = useDebts("quick", "CREDITOR", "PENDING");
 
-    const mappedDebts = [
+
+       const mappedDebts = [
         ...debtsBetweenPending.debts.map((debt: any) => ({
             id: debt.id,
             title: debt.purpose ?? "",
@@ -34,6 +39,36 @@ export default function ReceivableView() {
             status: debt.status ?? "ACCEPTED",
             type: "betweenUsers",
         })),
+        ...debtsBetweenRejected.debts.map((debt: any) => ({
+            id: debt.id,
+            title: debt.purpose ?? "",
+            creditor: debt.debtorSummary
+                ? `${debt.debtorSummary.firstName ?? ""} ${debt.debtorSummary.lastName ?? ""}`.trim()
+                : debt.targetUserName ?? "",
+            amount: debt.amount ?? 0,
+            status: debt.status ?? "REJECTED",
+            type: "betweenUsers",
+        })),
+        ...debtsBetweenPaymentPending.debts.map((debt: any) => ({
+            id: debt.id,
+            title: debt.purpose ?? "",
+            creditor: debt.debtorSummary
+                ? `${debt.debtorSummary.firstName ?? ""} ${debt.debtorSummary.lastName ?? ""}`.trim()
+                : debt.targetUserName ?? "",
+            amount: debt.amount ?? 0,
+            status: debt.status ?? "PAYMENT_CONFIRMATION_PENDING",
+            type: "betweenUsers",
+        })),
+        ...debtsBetweenPaymentRejected.debts.map((debt: any) => ({
+            id: debt.id,
+            title: debt.purpose ?? "",
+            creditor: debt.debtorSummary
+                ? `${debt.debtorSummary.firstName ?? ""} ${debt.debtorSummary.lastName ?? ""}`.trim()
+                : debt.targetUserName ?? "",
+            amount: debt.amount ?? 0,
+            status: debt.status ?? "PAYMENT_CONFIRMATION_REJECTED",
+            type: "betweenUsers",
+        })),
         ...debtsQuick.debts.map((debt: any) => ({
             id: debt.id,
             title: debt.purpose ?? "",
@@ -44,10 +79,20 @@ export default function ReceivableView() {
         })),
     ];
 
-    const loading = debtsBetweenPending.loading || debtsBetweenAccepted.loading || debtsQuick.loading;
+    const loading =
+        debtsBetweenPending.loading ||
+        debtsBetweenAccepted.loading ||
+        debtsBetweenRejected.loading ||
+        debtsBetweenPaymentPending.loading ||
+        debtsBetweenPaymentRejected.loading ||
+        debtsQuick.loading;
+
     const refresh = () => {
         debtsBetweenPending.refresh();
         debtsBetweenAccepted.refresh();
+        debtsBetweenRejected.refresh();
+        debtsBetweenPaymentPending.refresh();
+        debtsBetweenPaymentRejected.refresh();
         debtsQuick.refresh();
     };
 
@@ -63,7 +108,7 @@ export default function ReceivableView() {
         <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
             <FlatList
                 data={mappedDebts}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => `${item.id}-${item.type}-${item.status}`}
                 renderItem={({ item }) => (
                     <CardDebt
                         debt={item}
