@@ -117,6 +117,8 @@ export default function LoginScreen() {
                     style={styles.registerButton}
                     textStyle={styles.registerButtonText}
                 />
+
+            
             </View>
         </ImageBackground>
     );

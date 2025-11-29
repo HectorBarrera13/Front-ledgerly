@@ -1,20 +1,36 @@
 import { View, Text, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
+import GroupCard from "@/components/groups/GroupCard";
+import ButtonAdd from "@/components/ButtonAdd";
 
 export default function GroupsView() {
     const router = useRouter();
 
-    const handleDetails = () => {
-        // Ejemplo: navegar a la vista groupDetails pasando id=123 en la query
-        router.push('/groups/groupDetails?id=123');
+    // Grupos de ejemplo para renderizar las tarjetas
+    const sampleGroups = [
+        { id: '1', name: 'Viaje a CDMX', description: 'Gastos compartidos', amount: 1250 },
+        { id: '2', name: 'Cena del viernes', description: 'Restaurante', amount: 850 },
+        { id: '3', name: 'Regalos navideños', description: 'Colecta de regalos', amount: 2100 },
+    ];
+
+    const handleDetails = (id: string) => {
+        router.push(`/(modals)/groupDetails?id=${id}`);
     };
+
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Grupos</Text>
-            <Text style={styles.description}>
-                Aquí podrás crear y administrar grupos de personas para dividir
-                gastos.
-            </Text>
+            {sampleGroups.map((group) => (
+                <GroupCard 
+                    key={group.id} 
+                    group={group} 
+                    onPress={handleDetails}
+                    style={{ marginBottom: 16 }}
+                />
+            ))}
+
+            <View style={styles.addBtnContainer}>
+                <ButtonAdd onPress={() => router.push('/(modals)/newGroup')} />
+            </View>
         </View>
     );
 }
@@ -25,19 +41,16 @@ const styles = StyleSheet.create({
         padding: 24,
         backgroundColor: "#fff",
     },
-    title: {
-        fontSize: 20,
-        fontWeight: "700",
-        marginBottom: 8,
-    },
-    description: {
-        fontSize: 16,
-        color: "#555",
-    },
     loginButton: {
         backgroundColor: "#7B1FFF",
         borderRadius: 30,
         width: "100%",
         marginBottom: 15,
+    },
+    addBtnContainer: {
+        position: "absolute",
+        bottom: 24,
+        paddingRight: 24,
+        alignSelf: "flex-end",
     },
 });
