@@ -29,28 +29,26 @@ export default function NotificationsView() {
                 data={debtsBetween.debts}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => {
-                    // Solo para DebtBetweenUsers
-                    const creditor =
-                        "creditorSummary" in item && item.creditorSummary
-                            ? `${item.creditorSummary.firstName ?? ""} ${item.creditorSummary.lastName ?? ""}`.trim()
-                            : item.targetUserName ?? "";
-
-                    return (
-                        <NotificationDebtCard
-                            debt={{
-                                id: item.id,
-                                title: item.purpose ?? "",
-                                creditor,
-                                amount: item.amount ?? 0,
-                            }}
-                            showActions={true}
-                            onAccept={handleAccept}
-                            onReject={handleReject}
-                            onPress={(id) =>
-                                router.push(`(modals)/debtDetails?id=${id}&mode=payable&type=betweenUsers`)
-                            }
-                        />
-                    );
+                    if ("creditorSummary" in item && item.creditorSummary) {
+                        const creditor = `${item.creditorSummary.firstName ?? ""} ${item.creditorSummary.lastName ?? ""}`.trim();
+                        return (
+                            <NotificationDebtCard
+                                debt={{
+                                    id: item.id,
+                                    title: item.purpose ?? "",
+                                    creditor,
+                                    amount: item.amount ?? 0,
+                                }}
+                                showActions={true}
+                                onAccept={handleAccept}
+                                onReject={handleReject}
+                                onPress={(id) =>
+                                    router.push(`(modals)/debtDetails?id=${id}&mode=payable&type=betweenUsers`)
+                                }
+                            />
+                        );
+                    }
+                    return null;
                 }}
                 refreshControl={
                     <RefreshControl refreshing={loading} onRefresh={debtsBetween.refresh} />
