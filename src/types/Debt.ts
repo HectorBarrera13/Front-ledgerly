@@ -41,3 +41,12 @@ export interface QuickDebt {
     role: "DEBTOR" | "CREDITOR";
     targetUserName: string;
 }
+
+export const DebtStatusText: Record<DebtStatus, string> = {
+    PENDING: "Pendiente",
+    ACCEPTED: "Aceptada",
+    REJECTED: "Rechazada",
+    PAYMENT_CONFIRMATION_PENDING: "Pago pendiente de confirmación",
+    PAYMENT_CONFIRMATION_REJECTED: "Pago rechazado",
+    PAYMENT_CONFIRMED: "Pago confirmado",
+};

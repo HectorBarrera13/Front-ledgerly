@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -6,18 +6,9 @@ import DebtInfo from "@/components/debts/DebtInfo";
 import Input from "@/components/Input";
 import { Button } from "@/components/Button";
 import { authService } from "@/services/authService";
+import friendService from "@/services/friendService";
 
-const MOCK_FRIENDS = [
-    { id: "1", name: "Tony Polanco" },
-    { id: "2", name: "Ana López" },
-    { id: "3", name: "Carlos Ruiz" },
-    { id: "4", name: "Taría García" },
-    { id: "5", name: "Tuis Fernández" },
-    { id: "6", name: "Tuis Martínez" },
-    
-];
-
-export default function FinishDebtScreen() {
+export default function ConfirmDebtScreen() {
     const router = useRouter();
     const { concept = "", amount = "0", description = "" } = useLocalSearchParams();
 
@@ -25,13 +16,26 @@ export default function FinishDebtScreen() {
     const [targetName, setTargetName] = useState("");
     const [selectedFriend, setSelectedFriend] = useState<{ id: string; name: string } | null>(null);
     const [loading, setLoading] = useState(false);
+    const [friendSuggestions, setFriendSuggestions] = useState<{ id: string; name: string }[]>([]);
+    const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
-    const friendSuggestions = targetName.length > 0
-        ? MOCK_FRIENDS.filter(f =>
-            f.name.toLowerCase().includes(targetName.toLowerCase())
-        )
-        : [];
-
+useEffect(() => {
+    if (myRole === "CREDITOR" && targetName.length > 1) {
+        setLoadingSuggestions(true);
+        friendService.search(targetName)
+            .then(friends => {
+                const mapped = (friends || []).map(friend => ({
+                    id: friend.id,
+                    name: `${friend.firstName} ${friend.lastName}`,
+                }));
+                setFriendSuggestions(mapped);
+            })
+            .catch(() => setFriendSuggestions([]))
+            .finally(() => setLoadingSuggestions(false));
+    } else {
+        setFriendSuggestions([]);
+    }
+}, [targetName, myRole]);
     const canCreate = targetName.trim().length > 0 && !loading;
 
     const handleCreate = async () => {
@@ -122,8 +126,7 @@ export default function FinishDebtScreen() {
                 placeholder={`Nombre del ${myRole === "CREDITOR" ? "deudor" : "acreedor"}`}
                 style={styles.input}
             />
-            {/* Sugerencias de amigos */}
-            {friendSuggestions.length > 0 && !selectedFriend && (
+            {myRole === "CREDITOR" && friendSuggestions.length > 0 && !selectedFriend && (
                 <View style={styles.suggestionsContainer}>
                     <FlatList
                         data={friendSuggestions}

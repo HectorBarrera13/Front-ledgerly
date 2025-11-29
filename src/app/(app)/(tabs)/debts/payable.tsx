@@ -1,30 +1,35 @@
 import React, { useState } from "react";
-import { View, StyleSheet, RefreshControl, FlatList } from "react-native";
+import { View, StyleSheet, RefreshControl, FlatList, Text } from "react-native";
 import ButtonAdd from "@/components/ButtonAdd";
 import { useRouter } from "expo-router";
 import { useDebts } from "@/hooks/useDebts";
 import CardDebt from "@/components/debts/debtCard";
+import { DebtStatusText } from "@type/Debt";
 
 export default function PayableView() {
     const router = useRouter();
     const [isNavigating, setIsNavigating] = useState(false); 
-    const debtsBetween = useDebts("betweenUsers", "DEBTOR", "PENDING");
+    const debtsBetween = useDebts("betweenUsers", "DEBTOR", "ACCEPTED");
     const debtsQuick = useDebts("quick", "DEBTOR", "PENDING");
 
     const mappedDebts = [
         ...debtsBetween.debts.map((debt: any) => ({
             id: debt.id,
-            title: debt.purpose,
+            title: debt.purpose ?? "",
             creditor: debt.creditorSummary
-                ? `${debt.creditorSummary.firstName} ${debt.creditorSummary.lastName}`
+                ? `${debt.creditorSummary.firstName ?? ""} ${debt.creditorSummary.lastName ?? ""}`.trim()
                 : debt.targetUserName ?? "",
-            amount: debt.amount,
+            amount: debt.amount ?? 0,
+            status: debt.status ?? "PENDING",
+            type: "betweenUsers",
         })),
         ...debtsQuick.debts.map((debt: any) => ({
             id: debt.id,
-            title: debt.purpose,
+            title: debt.purpose ?? "",
             creditor: debt.targetUserName ?? "",
-            amount: debt.amount,
+            amount: debt.amount ?? 0,
+            status: debt.status ?? "PENDING",
+            type: "quick",
         })),
     ];
 
@@ -50,12 +55,15 @@ export default function PayableView() {
                 renderItem={({ item }) => (
                     <CardDebt
                         debt={item}
-                        onPress={() => router.push(`(modals)/debtDetails?id=${item.id}&mode=payable`)}
+                        onPress={() => router.push(`(modals)/debtDetails?id=${item.id}&mode=payable&type=${item.type}`)}
                     />
                 )}
                 contentContainerStyle={styles.container}
                 refreshControl={
                     <RefreshControl refreshing={loading} onRefresh={refresh} />
+                }
+                ListEmptyComponent={
+                    <Text style={styles.emptyText}>No tienes deudas por pagar.</Text>
                 }
             />
             <View style={styles.addBtnContainer}>
@@ -75,5 +83,10 @@ const styles = StyleSheet.create({
         bottom: 24,
         paddingRight: 24,
         alignSelf: "flex-end",
+    },
+    emptyText: {
+        textAlign: "center",
+        color: "#888",
+        marginTop: 32,
     },
 });

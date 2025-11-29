@@ -2,11 +2,15 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Debt, DebtStatusText } from "@type/Debt";
 import StatusIcon from "@asset/icon/icon_status.svg";
+import { Button } from "@/components/Button";
+import debtService from "@/services/debtService";
 
-interface CardDebtProps {
+interface NotificationDebtCardProps {
     debt: Debt;
-    onSettle?: (id: string) => void;
+    onAccept?: (id: string) => void;
+    onReject?: (id: string) => void;
     onPress?: (id: string) => void;
+    showActions?: boolean; 
 }
 
 const formatAmount = (amount: number) => {
@@ -26,8 +30,18 @@ const formatTitle = (title?: string, purpose?: string) => {
     return value.length > 14 ? value.slice(0, 13) + "..." : value;
 };
 
-const CardDebt: React.FC<CardDebtProps> = ({ debt, onSettle, onPress }) => (
-    <TouchableOpacity style={styles.card} activeOpacity={0.95} onPress={() => onPress?.(debt.id)}>
+const NotificationDebtCard: React.FC<NotificationDebtCardProps> = ({
+    debt,
+    onAccept,
+    onReject,
+    onPress,
+    showActions = false,
+}) => (
+    <TouchableOpacity
+        style={styles.card}
+        activeOpacity={0.95}
+        onPress={() => onPress?.(debt.id)}
+    >
         <View style={styles.row}>
             <View style={styles.titleContainer}>
                 <Text style={styles.title}>
@@ -39,16 +53,27 @@ const CardDebt: React.FC<CardDebtProps> = ({ debt, onSettle, onPress }) => (
                 {formatAmount(debt.amount ?? 0)}
             </Text>
         </View>
-        <TouchableOpacity
-            style={styles.settleBtn}
-            onPress={() => onSettle?.(debt.id)}
-            activeOpacity={0.8}
-        >
-            <StatusIcon width={22} height={22} style={styles.checkIcon} />
-            <Text style={styles.settleText}>
-                {DebtStatusText[debt.status as keyof typeof DebtStatusText] ?? "Desconocido"}
-            </Text>
-        </TouchableOpacity>
+        {showActions && (
+            <View style={styles.actions}>
+                <Button
+                    title="Aceptar"
+                    onPress={async () => {
+                        await debtService.acceptDebtBetweenUsers(debt.id);
+                        onAccept?.(debt.id);
+                    }}
+                    style={styles.acceptBtn}
+                    textStyle={{color:"#000"}}
+                />
+                <Button
+                    title="Rechazar"
+                    onPress={async () => {
+                        await debtService.rejectDebtBetweenUsers(debt.id);
+                        onReject?.(debt.id);
+                    }}
+                    style={styles.rejectBtn}
+                />
+            </View>
+        )}
     </TouchableOpacity>
 );
 
@@ -86,14 +111,10 @@ const styles = StyleSheet.create({
         minWidth: 70,
         textAlign: "right",
     },
-    settleBtn: {
+    statusRow: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#fff",
-        borderRadius: 24,
-        paddingVertical: 8,
-        paddingHorizontal: 18,
-        alignSelf: "flex-start",
+        marginBottom: 12,
     },
     checkIcon: {
         fontSize: 22,
@@ -105,6 +126,24 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         fontSize: 17,
     },
+    actions: {
+        flexDirection: "row",
+        gap: 12,
+        marginTop: 8,
+        justifyContent: "center",
+
+    },
+    acceptBtn: {
+        backgroundColor: "#fff",
+        flex: 1,
+    },
+    rejectBtn: {
+        backgroundColor: "transparent",
+        flex: 1,
+        borderWidth: 1,
+        borderColor: "#fff",
+
+    },
 });
 
-export default CardDebt;
+export default NotificationDebtCard;

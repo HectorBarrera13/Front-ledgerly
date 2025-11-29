@@ -399,7 +399,7 @@ export class AuthService {
 
     async newDebtBetweenUsers(data: NewDebtPayload): Promise<void> {
         try {
-            await this.api.post("/debts-between-users", data);
+            await this.api.post("/debt-between-users", data);
         } catch (error: any) {
             throw new AuthError(
                 error.message || "Error al crear la deuda entre usuarios",

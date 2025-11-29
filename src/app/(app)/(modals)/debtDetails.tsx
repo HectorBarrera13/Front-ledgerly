@@ -33,6 +33,34 @@ export default function DebtDetailScreen() {
         if (id) fetchDebt();
     }, [id, type]);
 
+    // Handler para el deudor: reportar pago (deuda entre personas)
+    const handleReportPayment = async () => {
+        await debtService.reportDebtPayment(debt.id);
+        setDebt({ ...debt, status: "PAYMENT_CONFIRMATION_PENDING" });
+        router.push(`(modals)/successNotification?title=¡Listo!&message=Hemos notificado al acreedor`);
+    };
+
+    // Handler para el acreedor: confirmar pago (deuda entre personas)
+    const handleVerifyPayment = async () => {
+        await debtService.verifyDebtPayment(debt.id);
+        setDebt({ ...debt, status: "PAYMENT_CONFIRMED" });
+        router.push(`(modals)/successNotification?title=¡Pago confirmado!&message=La deuda ha sido saldada`);
+    };
+
+    // Handler para el acreedor: rechazar pago (deuda entre personas)
+    const handleRejectPayment = async () => {
+        await debtService.rejectDebtPayment(debt.id);
+        setDebt({ ...debt, status: "PAYMENT_CONFIRMATION_REJECTED" });
+        router.push(`(modals)/successNotification?title=Pago rechazado&message=El pago fue rechazado`);
+    };
+
+    // Handler para deuda rápida: confirmar pago directo
+    const handleQuickConfirm = async () => {
+        await debtService.verifyDebtPayment(debt.id);
+        setDebt({ ...debt, status: "PAYMENT_CONFIRMED" });
+        router.push(`(modals)/successNotification?title=¡Listo!&message=La deuda ha sido saldada`);
+    };
+
     if (loading) {
         return (
             <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -72,14 +100,6 @@ export default function DebtDetailScreen() {
 
     const finalMode = mode || "";
 
-    const decodedMessage = finalMode === "receivable"
-        ? "¡La deuda será marcada como saldada cuando el deudor confirme el pago!"
-        : "¡La deuda será marcada como pagada cuando el acreedor confirme el pago!";
-
-    const decodedTitle = finalMode === "receivable"
-        ? "Hemos notificado al deudor"
-        : "Hemos notificado al acreedor";
-
     return (
         <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
@@ -106,15 +126,51 @@ export default function DebtDetailScreen() {
 
                 <View style={{ height: 12 }} />
 
-                <Button
-                    title={finalMode === "receivable" ? "Marcar como saldada" : "Marcar como pagada"}
-                    onPress={() => {
-                        const title = encodeURIComponent(decodedTitle);
-                        const message = encodeURIComponent(decodedMessage);
-                        router.push(`(modals)/successNotification?title=${title}&message=${message}`);
-                    }}
-                    style={styles.payButton}
-                />
+                {/* Deudor: deuda entre personas, status ACCEPTED */}
+                {type === "betweenUsers" && finalMode === "payable" && status === "ACCEPTED" && (
+                    <Button
+                        title="Marcar como pagada"
+                        onPress={handleReportPayment}
+                        style={styles.payButton}
+                    />
+                )}
+
+                {/* Acreedor: deuda entre personas, status PAYMENT_CONFIRMATION_PENDING */}
+                {type === "betweenUsers" && finalMode === "receivable" && status === "PAYMENT_CONFIRMATION_PENDING" && (
+                    <View>
+                        <Button
+                            title="Confirmar pago"
+                            onPress={handleVerifyPayment}
+                            style={styles.payButton}
+                        />
+                        <Button
+                            title="Rechazar pago"
+                            onPress={handleRejectPayment}
+                            style={[styles.payButton, { backgroundColor: "#f8653c", marginTop: 8 }]}
+                        />
+                    </View>
+                )}
+
+                {/* Deuda rápida: botón para marcar como pagada/saldada, cambia directo a confirmado */}
+                {type === "quick" && (finalMode === "payable" || finalMode === "receivable") && status !== "PAYMENT_CONFIRMED" && (
+                    <Button
+                        title={finalMode === "receivable" ? "Marcar como saldada" : "Marcar como pagada"}
+                        onPress={handleQuickConfirm}
+                        style={styles.payButton}
+                    />
+                )}
+
+                {/* Mensaje informativo si el pago fue confirmado o rechazado */}
+                {status === "PAYMENT_CONFIRMED" && (
+                    <Text style={{ color: "#0ac78e", marginTop: 24, fontWeight: "bold" }}>
+                        Pago confirmado
+                    </Text>
+                )}
+                {status === "PAYMENT_CONFIRMATION_REJECTED" && (
+                    <Text style={{ color: "#f8653c", marginTop: 24, fontWeight: "bold" }}>
+                        Pago rechazado
+                    </Text>
+                )}
             </ScrollView>
         </SafeAreaView>
     );
