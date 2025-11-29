@@ -26,7 +26,7 @@ export default function NewDebtScreen() {
 
     const handleContinue = () => {
         router.push({
-            pathname: "finishDebt",
+            pathname: "confirmDebt",
             params: { concept, amount, description },
         });
     };

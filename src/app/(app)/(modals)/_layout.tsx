@@ -22,7 +22,7 @@ export default function ModalsLayout() {
                 }}
             />
             <Stack.Screen
-                name="finishDebt"
+                name="confirmDebt"
                 options={{
                     headerTitleAlign: "center",
                     headerShown: false,

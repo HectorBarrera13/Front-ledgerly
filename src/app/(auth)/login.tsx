@@ -57,6 +57,7 @@ export default function LoginScreen() {
             source={require("@asset/img/bg_screen.jpg")}
             style={styles.background}
             resizeMode="cover"
+
         >
             <StatusBar style="light" />
             <View style={styles.header}>
@@ -76,7 +77,7 @@ export default function LoginScreen() {
                     autoCapitalize="none"
                     Icon={EmailIcon}
                     iconPosition="left"
-                    containerStyle={{ marginBottom: 35 }}
+                    containerStyle={[{ marginBottom: 35 }, styles.inputCentered]}
                 />
                 <AuthInput
                     placeholder="Contraseña"
@@ -87,6 +88,7 @@ export default function LoginScreen() {
                     iconPosition="left"
                     iconLeftStyle={{ left: 11 }}
                     iconSize={30}
+                    containerStyle={styles.inputCentered}
                 />
                 <View style={styles.forgotContainer}>
                     <Text style={styles.forgotText}>
@@ -94,11 +96,6 @@ export default function LoginScreen() {
                     </Text>
                     <Text style={styles.forgotLink} onPress={() => {}}>
                         ¡Haz click aquí!
-                    </Text>
-                </View>
-                <View>
-                    <Text style={styles.forgotLink} onPress={() => {}}>
-                        Press to redirect pages
                     </Text>
                 </View>
                 <Button
@@ -159,7 +156,7 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 40,
         padding: 30,
         flex: 1,
-        alignItems: "center",
+        alignItems: "stretch",
     },
     loginTitle: {
         fontSize: 24,
@@ -198,6 +195,11 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: "bold",
         fontFamily: "InstumentSans-Bold",
+    },
+    
+    inputCentered: {
+        alignSelf: "center",
+        width: "100%", 
     },
     divider: {
         height: 1,
