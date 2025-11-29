@@ -123,7 +123,6 @@ export default function DebtDetailScreen() {
 
                 <View style={{ height: 12 }} />
 
-                {/* Deudor: deuda entre personas, status ACCEPTED */}
                 {type === "betweenUsers" && finalMode === "payable" && status === "ACCEPTED" && (
                     <Button
                         title="Marcar como pagada"
@@ -132,7 +131,6 @@ export default function DebtDetailScreen() {
                     />
                 )}
 
-                {/* Acreedor: deuda entre personas, status PAYMENT_CONFIRMATION_PENDING */}
                 {type === "betweenUsers" && finalMode === "receivable" && status === "PAYMENT_CONFIRMATION_PENDING" && (
                     <View>
                         <Button
@@ -165,7 +163,6 @@ export default function DebtDetailScreen() {
                     />
                 )}
 
-                {/* Deuda rápida: botón para marcar como pagada/saldada, cambia directo a confirmado */}
                 {type === "quick" && (finalMode === "payable" || finalMode === "receivable") && status !== "PAYMENT_CONFIRMED" && (
                     <Button
                         title={finalMode === "receivable" ? "Marcar como saldada" : "Marcar como pagada"}
@@ -173,17 +170,12 @@ export default function DebtDetailScreen() {
                         style={styles.payButton}
                     />
                 )}
-
-                {/* Mensaje informativo si el pago fue confirmado o rechazado */}
-                {status === "PAYMENT_CONFIRMED" && (
-                    <Text style={{ color: "#0ac78e", marginTop: 24, fontWeight: "bold" }}>
-                        Pago confirmado
-                    </Text>
-                )}
-                {status === "PAYMENT_CONFIRMATION_REJECTED" && (
-                    <Text style={{ color: "#f8653c", marginTop: 24, fontWeight: "bold" }}>
-                        Pago rechazado
-                    </Text>
+                {type === "betweenUsers" && finalMode === "payable" && status === "PAYMENT_CONFIRMATION_REJECTED" && (
+                    <Button
+                        title={finalMode === "payable" ? "Marcar como saldada" : "Marcar como pagada"}
+                        onPress={handleReportPayment}
+                        style={styles.payButton}
+                    />
                 )}
 
             </ScrollView>
