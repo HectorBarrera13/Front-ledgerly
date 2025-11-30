@@ -1,70 +1,33 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { View, Text, StyleSheet, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Input from "@/components/Input";
 import { Button } from "@/components/Button";
-import debtService from "@/services/debtService";
-import { DebtBetweenUsers, QuickDebt } from "@/types/Debt";
+import { useEditDebt } from "@/hooks/useEditDebt";
+import { editDebt } from "@/libs/editDebtActions";
 
 export default function EditDebtScreen() {
     const router = useRouter();
     const { id, type } = useLocalSearchParams();
-    const [concept, setConcept] = useState("");
-    const [amount, setAmount] = useState("");
-    const [description, setDescription] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [debt, setDebt] = useState<DebtBetweenUsers | QuickDebt | null>(null);
 
-   useEffect(() => {
-        const fetchDebt = async () => {
-            setLoading(true);
-            try {
-                let result: DebtBetweenUsers | QuickDebt;
-                if (type === "betweenUsers") {
-                    result = await debtService.fetchDebtsBetweenUsersById(id as string) as DebtBetweenUsers;
-                } else {
-                    result = await debtService.fetchQuickDebtById(id as string) as QuickDebt;
-                }
-                console.log("Fetched debt:", result);
-                setDebt(result); 
-                setConcept(result.purpose || "");
-                setAmount(String(result.amount));
-                setDescription(result.description || "");
-            } catch {
-                Alert.alert("Permiso denegado", "No tienes permisos para editar esta deuda.")
-            } finally {
-                setLoading(false);
-            }
-        };
-        if (id) fetchDebt();
-    }, [id, type]);
+    const {
+        concept,
+        setConcept,
+        amount,
+        setAmount,
+        description,
+        setDescription,
+        loading,
+    } = useEditDebt(id as string, type as string);
 
     const canSave = concept.trim() !== "" && amount.trim() !== "";
 
     const handleSave = async () => {
-        setLoading(true);
         try {
-            const payload = {
-                new_purpose: concept,
-                new_description: description,
-                new_amount: Math.round(parseFloat(String(amount)) * 100),
-                new_currency: "MXN",
-            };
-            if (type === "betweenUsers") {
-                console.log("Editing debt between users with payload:", payload);
-                await debtService.editDebtBetweenUsers(id as string, payload as unknown as Partial<DebtBetweenUsers>);
-            } else {
-                await debtService.editQuickDebt(id as string, payload as unknown as Partial<QuickDebt>);
-            }
-            router.replace({
-                pathname: "debts/receivable",
-            });
+            await editDebt(id as string, type as string, concept, amount, description, router);
         } catch (error) {
-            console.log("EDIT ERROR:", error); 
             Alert.alert("Error", "No se pudo editar la deuda.");
-        } finally {
-            setLoading(false);
         }
     };
 

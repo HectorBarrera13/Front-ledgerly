@@ -1,62 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import DebtInfo from "@/components/debts/DebtInfo";
-import {Button} from "@/components/Button";
+import { Button } from "@/components/Button";
 import CloseButton from "@/components/CloseButton";
-import debtService from "@/services/debtService";
 import { DebtStatusText } from "@/types/Debt";
+import { useDebtDetails } from "@/hooks/useDebtDetails";
+import {
+    reportPayment,
+    verifyPayment,
+    rejectPayment,
+    quickConfirm,
+} from "@/libs/debtActions";
 
 export default function DebtDetailScreen() {
     const { id, mode, type } = useLocalSearchParams();
     const router = useRouter();
-    const [debt, setDebt] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchDebt = async () => {
-            setLoading(true);
-            try {
-                let result;
-                if (type === "betweenUsers") {
-                    result = await debtService.fetchDebtsBetweenUsersById(id as string);
-                } else {
-                    result = await debtService.fetchQuickDebtById(id as string);
-                }
-                setDebt(result);
-            } catch (error) {
-                setDebt(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-        if (id) fetchDebt();
-    }, [id, type]);
-
-    const handleReportPayment = async () => {
-        await debtService.reportDebtPayment(debt.id);
-        setDebt({ ...debt, status: "PAYMENT_CONFIRMATION_PENDING" });
-        router.push(`(modals)/successNotification?title=¡Listo!&message=Hemos notificado al acreedor`);
-    };
-
-    const handleVerifyPayment = async () => {
-        await debtService.verifyDebtPayment(debt.id);
-        setDebt({ ...debt, status: "PAYMENT_CONFIRMED" });
-        router.push(`(modals)/successNotification?title=¡Pago confirmado!&message=La deuda ha sido saldada`);
-    };
-
-    const handleRejectPayment = async () => {
-        await debtService.rejectDebtPayment(debt.id);
-        setDebt({ ...debt, status: "PAYMENT_CONFIRMATION_REJECTED" });
-        router.push(`(modals)/successNotification?title=Pago rechazado&message=El pago fue rechazado`);
-    };
-
-    const handleQuickConfirm = async () => {
-        await debtService.verifyDebtPayment(debt.id);
-        setDebt({ ...debt, status: "PAYMENT_CONFIRMED" });
-        router.push(`(modals)/successNotification?title=¡Listo!&message=La deuda ha sido saldada`);
-    };
+    const { debt, setDebt, loading } = useDebtDetails(id as string, type as string);
 
     if (loading) {
         return (
@@ -97,6 +58,12 @@ export default function DebtDetailScreen() {
 
     const finalMode = mode || "";
 
+    const isAcceptedPayable = type === "betweenUsers" && finalMode === "payable" && status === "ACCEPTED";
+    const isPendingConfirmationReceivable = type === "betweenUsers" && finalMode === "receivable" && status === "PAYMENT_CONFIRMATION_PENDING";
+    const isEditable = status === "PENDING" || status === "REJECTED";
+    const isQuickPending = type === "quick" && (finalMode === "payable" || finalMode === "receivable") && status !== "PAYMENT_CONFIRMED";
+    const isRejectedPayable = type === "betweenUsers" && finalMode === "payable" && status === "PAYMENT_CONFIRMATION_REJECTED";
+
     return (
         <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
@@ -123,57 +90,57 @@ export default function DebtDetailScreen() {
 
                 <View style={{ height: 12 }} />
 
-                {type === "betweenUsers" && finalMode === "payable" && status === "ACCEPTED" && (
+                {isAcceptedPayable && (
                     <Button
                         title="Marcar como pagada"
-                        onPress={handleReportPayment}
+                        onPress={() => reportPayment(debt, setDebt, router)}
                         style={styles.payButton}
                     />
                 )}
 
-                {type === "betweenUsers" && finalMode === "receivable" && status === "PAYMENT_CONFIRMATION_PENDING" && (
+                {isPendingConfirmationReceivable && (
                     <View>
                         <Button
                             title="Confirmar pago"
-                            onPress={handleVerifyPayment}
+                            onPress={() => verifyPayment(debt, setDebt, router)}
                             style={styles.payButton}
                         />
                         <Button
                             title="Rechazar pago"
-                            onPress={handleRejectPayment}
+                            onPress={() => rejectPayment(debt, setDebt, router)}
                             style={[styles.payButton, { backgroundColor: "#f8653c", marginTop: 8 }]}
                         />
                     </View>
                 )}
 
-                {(status === "PENDING" || status === "REJECTED") && (
+                {isEditable && (
                     <Button
                         title="Editar deuda"
-                                onPress={() => {
-                                    if (!debt.id) {
-                                        console.log("ERROR: debt.id is undefined", debt);
-                                        return;
-                                    }
-                                    router.push({
-                                        pathname: "editDebt",
-                                        params: { id: debt.id, type, mode }
-                                    });
-                                }}
-                                style={[styles.payButton, { backgroundColor: "#555" }]}
+                        onPress={() => {
+                            if (!debt.id) {
+                                console.log("ERROR: debt.id is undefined", debt);
+                                return;
+                            }
+                            router.push({
+                                pathname: "editDebt",
+                                params: { id: debt.id, type, mode }
+                            });
+                        }}
+                        style={[styles.payButton, { backgroundColor: "#555" }]}
                     />
                 )}
 
-                {type === "quick" && (finalMode === "payable" || finalMode === "receivable") && status !== "PAYMENT_CONFIRMED" && (
+                {isQuickPending && (
                     <Button
                         title={finalMode === "receivable" ? "Marcar como saldada" : "Marcar como pagada"}
-                        onPress={handleQuickConfirm}
+                        onPress={() => quickConfirm(debt, setDebt, router)}
                         style={styles.payButton}
                     />
                 )}
-                {type === "betweenUsers" && finalMode === "payable" && status === "PAYMENT_CONFIRMATION_REJECTED" && (
+                {isRejectedPayable && (
                     <Button
                         title={finalMode === "payable" ? "Marcar como saldada" : "Marcar como pagada"}
-                        onPress={handleReportPayment}
+                        onPress={() => reportPayment(debt, setDebt, router)}
                         style={styles.payButton}
                     />
                 )}
