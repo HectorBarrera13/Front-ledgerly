@@ -53,7 +53,14 @@ export default function ModalsLayout() {
                     title: "Editar Deuda",
                 }}
             />
-            
+            <Stack.Screen
+                name="groupDetails"
+                options={{
+                    headerTitleAlign: "center",
+                    headerShown: false,
+                    title: "Detalles del Grupo",
+                }}
+            />
         </Stack>
     );
 }

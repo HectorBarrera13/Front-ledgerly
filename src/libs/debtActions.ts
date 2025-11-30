@@ -23,3 +23,9 @@ export async function quickConfirm(debt: any, setDebt: (d: any) => void, router:
     setDebt({ ...debt, status: "PAYMENT_CONFIRMED" });
     router.push(`(modals)/successNotification?title=¡Listo!&message=La deuda ha sido saldada`);
 }
+
+export async function resendDebt(debt: any, setDebt: (d: any) => void, router: any) {
+    console.log("Resending debt with id:", debt.id);
+    await debtService.resendDebt(debt.id);
+    router.push(`(modals)/successNotification?title=¡Listo!&message=Hemos reenviado la deuda`);
+}

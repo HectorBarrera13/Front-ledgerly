@@ -6,7 +6,9 @@ import Input from "@/components/Input";
 import { Button } from "@/components/Button";
 import { useEditDebt } from "@/hooks/useEditDebt";
 import { editDebt } from "@/libs/editDebtActions";
+import { resendDebt } from "@/libs/debtActions";
 import DebtModalHeader from "@/components/debts/DebtModalHeader";
+import { useDebtDetails } from "@/hooks/useDebtDetails";
 
 export default function EditDebtScreen() {
     const router = useRouter();
@@ -22,6 +24,8 @@ export default function EditDebtScreen() {
         loading,
     } = useEditDebt(id as string, type as string);
 
+    const { debt } = useDebtDetails(id as string, type as string);
+
     const canSave = concept.trim() !== "" && amount.trim() !== "";
 
     const handleSave = async () => {
@@ -29,6 +33,20 @@ export default function EditDebtScreen() {
             await editDebt(id as string, type as string, concept, amount, description, router);
         } catch (error) {
             Alert.alert("Error", "No se pudo editar la deuda.");
+        }
+    };
+
+    const canResend = debt?.status === "REJECTED";
+
+    const handleResend = async () => {
+        try {
+            await resendDebt(
+                { ...debt, concept, amount, description },
+                () => {},
+                router
+            );
+        } catch (error) {
+            Alert.alert("Error", "No se pudo reenviar la deuda.");
         }
     };
 
@@ -52,6 +70,13 @@ export default function EditDebtScreen() {
                 disabled={!canSave || loading}
                 style={styles.button}
             />
+            {canResend && (
+                <Button
+                    title="Reenviar deuda"
+                    onPress={handleResend}
+                    style={[styles.button, { backgroundColor: "#7B1FFF", marginTop: 12 }]}
+                />
+            )}
         </SafeAreaView>
     );
 }

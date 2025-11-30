@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import Input from "@/components/Input";
@@ -10,6 +10,23 @@ export default function NewGroupDebtScreen() {
 	const router = useRouter();
 	const [concept, setConcept] = useState("");
 	const [amount, setAmount] = useState("");
+	const [splitMode, setSplitMode] = useState<"equal" | "unequal" | null>(null);
+
+	const handleAmountChange = (text: string) => {
+
+		let cleanedAmount = String(text).replace(/-/g, "").replace(/[^0-9.]/g, "");
+		const parts = cleanedAmount.split('.');
+
+		if (parts.length > 2) {
+			cleanedAmount = parts[0] + '.' + parts.slice(1).join('');
+		}
+
+		if (cleanedAmount.startsWith('.')) {
+			cleanedAmount = '0' + cleanedAmount;
+		}
+
+		setAmount(cleanedAmount);
+	};
 	const [description, setDescription] = useState("");
 
 	return (
@@ -24,15 +41,35 @@ export default function NewGroupDebtScreen() {
 
 				<Input label="Concepto" value={concept} onChangeText={setConcept} maxLength={60} />
 
-				<Input label="Monto" value={amount} onChangeText={setAmount} keyboardType="numeric" />
 
 				<Input label="Descripción" value={description} onChangeText={setDescription} multiline numberOfLines={4} style={styles.textarea} />
+
+				<View style={styles.splitRow}>
+					<Pressable
+						style={[styles.splitBtn, splitMode === "equal" && styles.splitBtnActive]}
+						onPress={() => setSplitMode("equal")}
+					>
+						<Text style={[styles.splitBtnText, splitMode === "equal" && styles.splitBtnTextActive]}>Partes iguales</Text>
+					</Pressable>
+					<Pressable
+						style={[styles.splitBtn, splitMode === "unequal" && styles.splitBtnActive]}
+						onPress={() => setSplitMode("unequal")}
+					>
+						<Text style={[styles.splitBtnText, splitMode === "unequal" && styles.splitBtnTextActive]}>Partes desiguales</Text>
+					</Pressable>
+				</View>
+
+				{splitMode === "equal" && (
+					<Input label="Monto" value={amount} onChangeText={handleAmountChange} keyboardType="numeric" />
+				)}
 
 				<Button
 					title="Continuar"
 					onPress={() =>
 						router.push(
-							`/(modals)/addMembersGroupDebt?concept=${encodeURIComponent(concept)}&amount=${encodeURIComponent(amount)}`
+							`/(modals)/addMembersGroupDebt?concept=${encodeURIComponent(concept)}&amount=${encodeURIComponent(
+								splitMode === "equal" ? amount : ""
+							)}&split=${encodeURIComponent(splitMode ?? "")}`
 						)
 					}
 					style={styles.continueBtn}
@@ -75,6 +112,33 @@ const styles = StyleSheet.create({
 		height: 56,
 		borderRadius: 32,
 		backgroundColor: "#6C1ED6",
+	},
+	splitRow: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		marginBottom: 12,
+	},
+	splitBtn: {
+		flex: 1,
+		paddingVertical: 12,
+		borderRadius: 12,
+		borderWidth: 1,
+		borderColor: "#DCDCDC",
+		backgroundColor: "#fff",
+		alignItems: "center",
+		marginRight: 8,
+	},
+	splitBtnActive: {
+		backgroundColor: "#6C1ED6",
+		borderColor: "#6C1ED6",
+	},
+	splitBtnText: { 
+		color: "#6C1ED6", 
+		fontWeight: "700",
+	},
+	splitBtnTextActive: { 
+		color: "#fff", 
+		fontWeight: "700",
 	},
 });
 
