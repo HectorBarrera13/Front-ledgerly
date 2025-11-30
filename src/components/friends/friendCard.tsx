@@ -2,6 +2,7 @@ import React, { useRef } from "react";
 import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
 import { Friend } from "@type/Friends";
 import { Button } from "@component/Button";
+import AvatarInitials from "@/components/AvatarInitials";
 
 interface CardFriendProps {
     friend: Friend;
@@ -35,12 +36,6 @@ export default function FriendCard(props: CardFriendProps) {
         }).start();
     };
 
-    const getInitials = () => {
-        const firstInitial = props.friend.firstName.charAt(0).toUpperCase();
-        const lastInitial = props.friend.lastName.charAt(0).toUpperCase();
-        return `${firstInitial}${lastInitial}`;
-    };
-
     return (
         <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
             <Pressable
@@ -50,9 +45,12 @@ export default function FriendCard(props: CardFriendProps) {
                 onPressOut={handlePressOut}
             >
                 <View style={styles.cardContent}>
-                    <View style={styles.avatarContainer}>
-                        <Text style={styles.avatarText}>{getInitials()}</Text>
-                    </View>
+                    <AvatarInitials
+                        firstName={props.friend.firstName}
+                        lastName={props.friend.lastName}
+                        size={56}
+                        style={{ marginRight: 16 }}
+                    />
 
                     <View style={styles.info}>
                         <Text style={styles.name}>
@@ -99,20 +97,6 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         padding: 12,
-    },
-    avatarContainer: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: "#9e60ed",
-        justifyContent: "center",
-        alignItems: "center",
-        marginRight: 16,
-    },
-    avatarText: {
-        color: "#FFFFFF",
-        fontSize: 20,
-        fontWeight: "700",
     },
     info: {
         flex: 1,

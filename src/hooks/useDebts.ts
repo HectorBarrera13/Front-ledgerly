@@ -18,7 +18,12 @@ export function useDebts(type: DebtType, role: RoleType, status?: string) {
             } else {
                 response = await debtService.fetchQuickDebts(role, status);
             }
-            setDebts(response?.items ?? []);
+            setDebts(
+                response?.items
+                    ?.filter((debt) =>
+                        !(role === "DEBTOR" && debt.status === "REJECTED")
+                    ) ?? []
+            );
         } catch (error) {
             setDebts([]);
         } finally {
