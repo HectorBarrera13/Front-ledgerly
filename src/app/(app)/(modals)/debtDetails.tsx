@@ -12,6 +12,7 @@ import {
     verifyPayment,
     rejectPayment,
     quickConfirm,
+    resendDebt,
 } from "@/libs/debtActions";
 
 export default function DebtDetailScreen() {
@@ -60,9 +61,10 @@ export default function DebtDetailScreen() {
 
     const isAcceptedPayable = type === "betweenUsers" && finalMode === "payable" && status === "ACCEPTED";
     const isPendingConfirmationReceivable = type === "betweenUsers" && finalMode === "receivable" && status === "PAYMENT_CONFIRMATION_PENDING";
-    const isEditable = status === "PENDING" || status === "REJECTED";
+    const isEditable = status === "PENDING";
     const isQuickPending = type === "quick" && (finalMode === "payable" || finalMode === "receivable") && status !== "PAYMENT_CONFIRMED";
     const isRejectedPayable = type === "betweenUsers" && finalMode === "payable" && status === "PAYMENT_CONFIRMATION_REJECTED";
+    const isResendable = type === "betweenUsers" && (status === "REJECTED");
 
     return (
         <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -144,7 +146,13 @@ export default function DebtDetailScreen() {
                         style={styles.payButton}
                     />
                 )}
-
+                {isResendable && (
+                    <Button
+                        title="Reenviar deuda"
+                        onPress={() => resendDebt(debt, setDebt, router)}
+                        style={styles.payButton}
+                    />
+                )}
             </ScrollView>
         </SafeAreaView>
     );

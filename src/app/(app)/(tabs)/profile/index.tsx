@@ -25,15 +25,6 @@ export default function ProfileView() {
         return `${first}${last}`.toUpperCase();
     };
 
-    const handleFetchFriends = async () => {
-        try {
-            const result = await friendService.search("Ja"); 
-            console.log("Friends search result:", result);
-        } catch (error) {
-            console.log("Error fetching friends:", error);
-        }
-    };
-
     return (
         <ScrollView style={styles.container}>
             <View style={styles.header}>
@@ -77,12 +68,6 @@ export default function ProfileView() {
                     onPress={onLogout}
                     style={styles.logoutButton}
                     textStyle={styles.logoutButtonText}
-                />
-                <Button
-                    title="Ir a Playground"
-                    onPress={handleFetchFriends}
-                    style={{ backgroundColor: "#6C1ED6", marginTop: 8 }}
-                    textStyle={{ color: "white" }}
                 />
             </View>
         </ScrollView>

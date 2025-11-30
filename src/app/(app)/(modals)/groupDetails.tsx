@@ -1,112 +1,83 @@
+// src/app/(app)/(modals)/groupDetails.tsx
 import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { useRouter, Stack } from "expo-router";
-import CardDebt from "@/components/debts/debtCard";
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
+import { useRouter, Stack, useLocalSearchParams } from "expo-router";
+import CardGroupDebt from "@/components/groups/CardGroupDebt";
 import ButtonAdd from "@/components/ButtonAdd";
 import CloseButton from "@/components/CloseButton";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-// datos falsos simulando grupos 
-const fakeGroup = {
-	name: "Viaje a Cancún",
-	description:
-		"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non luctus lorem, at egestas felis.",
-	members: [
-		"Ana López",
-		"Daniel Martínez",
-		"Carla Ruiz",
-		"Fernando Torres",
-		"Valeria Navarro",
-	],
-};
-
-const fakeDebts = [
-    {
-        id: "1",
-        title: "Comida",
-        concept: "Comida",
-        amount: 1234.5,
-        debtor: "Usuario1",
-        creditor: "Usuario2",
-    },
-    {
-        id: "2",
-        title: "Hotel",
-        concept: "Hotel",
-        amount: 820.0,
-        debtor: "Usuario3",
-        creditor: "Usuario1",
-    },
-    {
-        id: "3",
-        title: "Transporte",
-        concept: "Transporte",
-        amount: 450.75,
-        debtor: "Usuario2",
-        creditor: "Usuario3",
-    },
-];
+import { useGroupDetails } from "@/hooks/useGroupDetails";
+import AvatarInitials from "@/components/AvatarInitials";
 
 export default function GroupDetailsScreen() {
-	const router = useRouter();
+    const router = useRouter();
+    const { id: groupId } = useLocalSearchParams<{ id: string }>();
+    const { group, members, debts, loading } = useGroupDetails(groupId ?? "");
 
-	const getInitials = (fullName: string) => {
-		const parts = fullName.trim().split(" ");
-		if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-		return (
-			parts[0].charAt(0).toUpperCase() +
-			parts[parts.length - 1].charAt(0).toUpperCase()
-		);
-	};
+    if (loading) {
+        return (
+            <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <ActivityIndicator size="large" color="#6C1ED6" />
+            </SafeAreaView>
+        );
+    }
 
-	return (
+    if (!group) {
+        return (
+            <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <Text>No se encontró el grupo.</Text>
+            </SafeAreaView>
+        );
+    }
+
+    return (
         <SafeAreaView style={{ flex: 1 }}>
-        <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
-            <Stack.Screen options={{ headerShown: false }} />
-            
-            <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-                <View style={styles.headerContent}>
-                    <View style={styles.header}>
-                        <Text style={styles.headerTitle}>{fakeGroup.name}</Text>
-                        <CloseButton style={styles.closeButton} />
-                    </View>
+            <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
+                <Stack.Screen options={{ headerShown: false }} />
+                <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+                    <View style={styles.headerContent}>
+                        <View style={styles.header}>
+                            <Text style={styles.headerTitle}>{group.name}</Text>
+                            <CloseButton style={styles.closeButton} />
+                        </View>
 
-                    <Text style={styles.sectionTitle}>Descripción del grupo</Text>
+                        <Text style={styles.sectionTitle}>Descripción del grupo</Text>
+                        <View style={styles.descriptionBox}>
+                            <Text style={styles.descriptionText}>{group.description}</Text>
+                        </View>
 
-                    <View style={styles.descriptionBox}>
-                        <Text style={styles.descriptionText}>{fakeGroup.description}</Text>
-                    </View>
+                        <Text style={styles.sectionTitle}>Integrantes del grupo</Text>
+                        <View style={styles.membersRow}>
+                            {members.map((member) => (
+                                <AvatarInitials
+                                    key={member.id}
+                                    firstName={member.firstName}
+                                    lastName={member.lastName}
+                                    size={40}
+                                    style={{ marginRight: 10 }}
+                                />
+                            ))}
+                        </View>
 
-                    <Text style={styles.sectionTitle}>Integrantes del grupo</Text>
+                        <View style={styles.separator} />
 
-                    <View style={styles.membersRow}>
-                        {fakeGroup.members.map((member, idx) => (
-                            <View key={member} style={styles.avatar}>
-                                <Text style={styles.avatarText}>{getInitials(member)}</Text>
-                            </View>
+                        {debts.map((debt) => (
+                            <CardGroupDebt
+                                key={debt.id}
+                                debt={debt}
+                                onPress={(id) => router.push(`/(modals)/debtDetails?id=${id}&mode=payable&type=group`)}
+                            />
                         ))}
                     </View>
-
-                    <View style={styles.separator} />
-
-                    {fakeDebts.map((debt) => (
-                        <CardDebt
-                            key={debt.id}
-                            debt={debt}
-                            onPress={(id) => router.push(`/(modals)/debtDetails?id=${id}&mode=payable&type=betweenUsers`)}
-                            onSettle={(id) => console.log("settle", id)}
-                        />
-                    ))}
+                </ScrollView>
+                <View style={styles.addBtnContainer}>
+                    <ButtonAdd onPress={() => router.push("/(modals)/newGroupDebt")} />
                 </View>
-            </ScrollView>
-
-            <View style={styles.addBtnContainer}>
-                <ButtonAdd onPress={() => router.push("/(modals)/newGroupDebt")} />
             </View>
-        </View>
         </SafeAreaView>
     );
 }
+
 
 const styles = StyleSheet.create({
     headerContent: {
