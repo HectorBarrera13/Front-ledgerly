@@ -29,7 +29,7 @@ export default function NewDebtScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-            <DebtModalHeader title="Nueva deuda" />
+            <DebtModalHeader title="Nueva deuda" action="back"/>
             <Input
                 label="Concepto"
                 value={concept}

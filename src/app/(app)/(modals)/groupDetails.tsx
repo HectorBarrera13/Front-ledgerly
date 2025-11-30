@@ -4,6 +4,7 @@ import { useRouter, Stack } from "expo-router";
 import CardDebt from "@/components/debts/debtCard";
 import ButtonAdd from "@/components/ButtonAdd";
 import CloseButton from "@/components/CloseButton";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // datos falsos simulando grupos 
 const fakeGroup = {
@@ -59,6 +60,7 @@ export default function GroupDetailsScreen() {
 	};
 
 	return (
+        <SafeAreaView style={{ flex: 1 }}>
         <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
             <Stack.Screen options={{ headerShown: false }} />
             
@@ -102,6 +104,7 @@ export default function GroupDetailsScreen() {
                 <ButtonAdd onPress={() => router.push("/(modals)/newGroupDebt")} />
             </View>
         </View>
+        </SafeAreaView>
     );
 }
 

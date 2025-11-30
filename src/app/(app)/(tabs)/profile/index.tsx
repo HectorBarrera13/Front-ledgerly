@@ -25,10 +25,9 @@ export default function ProfileView() {
         return `${first}${last}`.toUpperCase();
     };
 
-    // Playground: prueba el GET de búsqueda de amigos
     const handleFetchFriends = async () => {
         try {
-            const result = await friendService.search("Ja"); // Cambia "a" por el texto que quieras probar
+            const result = await friendService.search("Ja"); 
             console.log("Friends search result:", result);
         } catch (error) {
             console.log("Error fetching friends:", error);

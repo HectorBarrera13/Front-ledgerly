@@ -45,6 +45,15 @@ export default function ModalsLayout() {
                     title: "Notificación de Éxito",
                 }}
             />
-      </Stack>
-  );
+            <Stack.Screen
+                name="editDebt"
+                options={{
+                    headerTitleAlign: "center",
+                    headerShown: false,
+                    title: "Editar Deuda",
+                }}
+            />
+            
+        </Stack>
+    );
 }

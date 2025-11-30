@@ -6,6 +6,7 @@ import Input from "@/components/Input";
 import { Button } from "@/components/Button";
 import { useEditDebt } from "@/hooks/useEditDebt";
 import { editDebt } from "@/libs/editDebtActions";
+import DebtModalHeader from "@/components/debts/DebtModalHeader";
 
 export default function EditDebtScreen() {
     const router = useRouter();
@@ -41,7 +42,7 @@ export default function EditDebtScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.title}>Editar deuda</Text>
+            <DebtModalHeader title="Editar deuda" style={styles.header} action="back"/>
             <Input label="Concepto" value={concept} onChangeText={setConcept} style={styles.input} maxLength={30} />
             <Input label="Monto" value={amount} onChangeText={setAmount} keyboardType="numeric" style={styles.input} />
             <Input label="Descripción" value={description} onChangeText={setDescription} multiline style={styles.input} />
@@ -57,7 +58,7 @@ export default function EditDebtScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#fff", padding: 24 },
-    title: { fontSize: 24, fontWeight: "bold", marginBottom: 16, color: "#555" },
+    header: { alignContent: "center", marginBottom: 24 },
     input: { marginBottom: 12 },
     button: { marginTop: 24, backgroundColor: "#6C1ED6" },
 });

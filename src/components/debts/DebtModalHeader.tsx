@@ -1,11 +1,24 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
 import { useRouter } from "expo-router";
 
-export default function DebtModalHeader({ title }: { title: string }) {
+interface DebtModalHeaderProps {
+    title: string;
+    style?: ViewStyle;
+    action?: "replace" | "back";
+}
+
+export default function DebtModalHeader({ title, style, action = "replace" }: DebtModalHeaderProps) {
     const router = useRouter();
+    const handleClose = () => {
+        if (action === "replace") {
+            router.replace("/debts");
+        } else {
+            router.back();
+        }
+    };
     return (
-        <View style={styles.header}>
+        <View style={[styles.header, style]}>
             <Text style={styles.title}>{title}</Text>
             <TouchableOpacity
                 style={styles.closeBtn}
