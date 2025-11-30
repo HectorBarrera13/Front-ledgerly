@@ -1,33 +1,42 @@
-import { View, Text, StyleSheet } from "react-native";
+import React from "react";
+import { View, FlatList, StyleSheet, RefreshControl, Text } from "react-native";
 import { useRouter } from "expo-router";
+import { useGroups } from "@/hooks/useGroups";
 import GroupCard from "@/components/groups/GroupCard";
 import ButtonAdd from "@/components/ButtonAdd";
 
 export default function GroupsView() {
     const router = useRouter();
+    const { groups, loading, refresh } = useGroups();
 
-    // Grupos de ejemplo para renderizar las tarjetas
-    const sampleGroups = [
-        { id: '1', name: 'Viaje a CDMX', description: 'Gastos compartidos', amount: 1250 },
-        { id: '2', name: 'Cena del viernes', description: 'Restaurante', amount: 850 },
-        { id: '3', name: 'Regalos navideños', description: 'Colecta de regalos', amount: 2100 },
-    ];
-
-    const handleDetails = (id: string) => {
-        router.push(`/(modals)/groupDetails?id=${id}`);
+    const handleDetails = (groupId: string) => {
+        router.push(`/(modals)/groupDetails?id=${groupId}`);
     };
+
+    const sortedGroups = [...groups].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
     return (
         <View style={styles.container}>
-            {sampleGroups.map((group) => (
-                <GroupCard 
-                    key={group.id} 
-                    group={group} 
-                    onPress={handleDetails}
-                    style={{ marginBottom: 16 }}
-                />
-            ))}
-
+            <FlatList
+                data={sortedGroups}
+                keyExtractor={(item, idx) => item.groupId ?? String(idx)}
+                renderItem={({ item }) => (
+                    <GroupCard
+                        group={item}
+                        onPress={handleDetails}
+                        style={{ marginBottom: 16 }}
+                    />
+                )}
+                contentContainerStyle={{ paddingBottom: 80 }}
+                refreshControl={
+                    <RefreshControl refreshing={loading} onRefresh={refresh} />
+                }
+                ListEmptyComponent={
+                    <Text style={styles.emptyText}>No tienes grupos.</Text>
+                }
+            />
             <View style={styles.addBtnContainer}>
                 <ButtonAdd onPress={() => router.push('/(modals)/newGroup')} />
             </View>
@@ -41,16 +50,15 @@ const styles = StyleSheet.create({
         padding: 24,
         backgroundColor: "#fff",
     },
-    loginButton: {
-        backgroundColor: "#7B1FFF",
-        borderRadius: 30,
-        width: "100%",
-        marginBottom: 15,
-    },
     addBtnContainer: {
         position: "absolute",
         bottom: 24,
         paddingRight: 24,
         alignSelf: "flex-end",
+    },
+    emptyText: {
+        textAlign: "center",
+        color: "#888",
+        marginTop: 32,
     },
 });

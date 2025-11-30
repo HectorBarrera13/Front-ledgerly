@@ -1,6 +1,12 @@
 import React from "react";
 import { View, Text, StyleSheet, ViewStyle } from "react-native";
-import { AvatarInitialsProps } from "@/types/AvatarInitialsProps";
+
+interface AvatarInitialsProps {
+    firstName: string;
+    lastName: string;
+    size?: number;
+    style?: ViewStyle;
+}
 
 export default function AvatarInitials({
     firstName,
