@@ -2,6 +2,9 @@ import { Tabs } from "expo-router";
 import IconLedgerly from "@asset/icon/icon_ledgerly.svg";
 import IconFriends from "@asset/icon/icon_tab_friends.svg";
 import IconProfile from "@asset/icon/icon_tab_profile.svg";
+import IconDebts from "@asset/icon/icon_tab_debts.svg";
+import IconNotifications from "@asset/icon/icon_tab_notifications.svg";
+import IconGroups from "@asset/icon/icon_tab_groups.svg";
 import { headerStyles } from "@/configs/styles";
 
 export default function TabLayout() {
@@ -20,6 +23,9 @@ export default function TabLayout() {
                     headerLeft: () => (
                         <IconLedgerly style={headerStyles.headerLeft} />
                     ),
+                    tabBarIcon: ({ color, size }) => (
+                        <IconDebts width={size} height={size} fill={color} />
+                    ),
                     tabBarActiveTintColor: "#7519EB",
                 }}
             />
@@ -32,19 +38,9 @@ export default function TabLayout() {
                     headerLeft: () => (
                         <IconLedgerly style={headerStyles.headerLeft} />
                     ),
-                    tabBarActiveTintColor: "#7519EB",
-                }}
-            />
-            <Tabs.Screen
-                name="profile"
-                options={{
-                    title: "Perfil",
-                    headerTitleStyle: headerStyles.title,
-                    headerTitleAlign: "center",
-                    headerLeft: () => (
-                        <IconLedgerly style={headerStyles.headerLeft} />
+                    tabBarIcon: ({ color, size }) => (
+                        <IconGroups width={size} height={size} fill={color} />
                     ),
-                    tabBarIcon: () => <IconProfile />,
                     tabBarActiveTintColor: "#7519EB",
                 }}
             />
@@ -73,6 +69,22 @@ export default function TabLayout() {
                     headerLeft: () => (
                         <IconLedgerly style={headerStyles.headerLeft} />
                     ),
+                    tabBarIcon: ({ color, size }) => (
+                        <IconNotifications width={size} height={size} fill={color} />
+                    ),
+                    tabBarActiveTintColor: "#7519EB",
+                }}
+            />
+            <Tabs.Screen
+                name="profile"
+                options={{
+                    title: "Perfil",
+                    headerTitleStyle: headerStyles.title,
+                    headerTitleAlign: "center",
+                    headerLeft: () => (
+                        <IconLedgerly style={headerStyles.headerLeft} />
+                    ),
+                    tabBarIcon: () => <IconProfile />,
                     tabBarActiveTintColor: "#7519EB",
                 }}
             />
