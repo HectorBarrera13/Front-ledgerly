@@ -17,8 +17,23 @@ export default function AddMembersGroupDebt() {
 	const rawGroupMembers = Array.isArray(params.groupMembers) ? params.groupMembers[0] : params.groupMembers;
 	const availableMembers = rawGroupMembers ? String(rawGroupMembers).split("|") : sampleMembers;
 
-	const [selected, setSelected] = useState<string[]>([]);
-	const [equalParts, setEqualParts] = useState(true);
+	const splitParam = Array.isArray(params.split) ? params.split[0] : params.split ?? "";
+	const initialEqual = splitParam === "equal";
+	const [selected, setSelected] = useState<string[]>(() => [...availableMembers]);
+	const [equalParts] = useState(initialEqual);
+
+	const total = Number.parseFloat(String(amount)) || 0;
+	const [amountsPer, setAmountsPer] = useState<Record<string, string>>(() => {
+		const initial: Record<string, string> = {};
+		if (initialEqual && availableMembers.length) {
+			const per = (total / availableMembers.length).toFixed(2);
+			for (const m of availableMembers) initial[m] = per;
+		} else {
+			for (const m of availableMembers) initial[m] = "";
+		}
+		return initial;
+	});
+
 	const [memberName, setMemberName] = useState("");
 	const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -30,7 +45,38 @@ export default function AddMembersGroupDebt() {
 		if (!selected.includes(name)) setSelected((prev) => [...prev, name]);
 		setMemberName("");
 		setShowSuggestions(false);
+		if (equalParts) {
+			const newCount = selected.length + 1;
+			const per = (total / newCount).toFixed(2);
+			const next: Record<string, string> = {};
+			for (const m of [...selected, name]) next[m] = per;
+			setAmountsPer(next);
+		}
 	};
+
+	const removeMember = (name: string) => {
+		setSelected((prev) => prev.filter((x) => x !== name));
+	};
+
+	React.useEffect(() => {
+		if (equalParts) {
+			const per = selected.length ? (total / selected.length).toFixed(2) : "0.00";
+			const next: Record<string, string> = {};
+			for (const m of selected) next[m] = per;
+			setAmountsPer(next);
+		} else {
+			const next: Record<string, string> = {};
+			for (const m of selected) next[m] = amountsPer[m] ?? "";
+			setAmountsPer(next);
+		}
+	}, [selected.length, equalParts, total]);
+
+	const [dynamicAmounts, setDynamicAmounts] = useState(0);
+
+	React.useEffect(() => {
+		const totalAmount = Object.values(amountsPer).map((v) => Number.parseFloat(v) || 0).reduce((a, b) => a + b, 0);
+		setDynamicAmounts(totalAmount);
+	}, [amountsPer]);
 
 	return (
 		<SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -45,7 +91,7 @@ export default function AddMembersGroupDebt() {
 				<DebtInfo
 					concept={String(concept ?? "")}
 					description={""}
-					amount={Number.parseFloat(String(amount)) || 0}
+					amount={dynamicAmounts}
 				/>
 
 				<View style={styles.inputContainer}>
@@ -83,30 +129,46 @@ export default function AddMembersGroupDebt() {
 							))}
 						</View>
 					)}
+					
 				</View>
 
 				<View style={styles.membersBox}>
+					<Text style={styles.label}>Integrantes de la deuda</Text>
 					{selected.map((m) => (
-						<View key={m} style={styles.memberRow}>
-							<Text style={styles.memberDot}>•</Text>
-							<Text style={styles.memberText}>{m}</Text>
+						<View key={m} style={[styles.memberRow, { justifyContent: 'space-between' }] }>
+							<View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+								<Text style={styles.memberDot}>•</Text>
+								<Text style={[styles.memberText, { flex: 1 }]}>{m}</Text>
+							</View>
+							<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+								<TextInput
+									style={styles.amountInput}
+									value={amountsPer[m] ?? ""}
+									onChangeText={(v) => setAmountsPer((p) => ({ ...p, [m]: v }))}
+									keyboardType="numeric"
+									editable={!equalParts}
+									placeholder="$0.00"
+								/>
+								<Pressable onPress={() => removeMember(m)} style={{ marginLeft: 12 }}>
+									<Text style={{ color: '#d00', fontWeight: '700' }}>✕</Text>
+								</Pressable>
+							</View>
 						</View>
 					))}
 				</View>
 
-				<View style={styles.checkboxRow}>
-					<Pressable onPress={() => setEqualParts((s) => !s)} style={styles.checkbox}>
-						{equalParts && <View style={styles.checkboxInner} />}
-					</Pressable>
-					<Text style={{ marginLeft: 8 }}>Partes iguales</Text>
-				</View>
-
 				<Button
-					title="Asignar montos"
+					title="Finalizar deuda"
 					onPress={() =>
                         //esto lo hizo el primo, no estoy segura si está bien, pero confío en ti javisoftware :) JASJDAJSDJ
 						router.push(
-							`/(modals)/addAmountGroupDebt?members=${encodeURIComponent(selected.join("|"))}&amount=${encodeURIComponent(amount)}`
+							`/(modals)/successNotification?type=groupDebt&concept=${encodeURIComponent(concept)}&amount=${encodeURIComponent(
+								amount
+							)}&groupMembers=${encodeURIComponent(selected.join("|"))}&amountsPer=${encodeURIComponent(
+								selected.map((m) => `${m}:${amountsPer[m] || "0"}`).join("|")
+								//lo del title es para que en la pantalla de éxito salga el "Deuda creada con éxito" 
+								//eso sí está correcto javisotftware
+							)}&title=${encodeURIComponent("Deuda creada con éxito")}`
 						)
 					}
 					style={styles.continueBtn}
@@ -213,28 +275,6 @@ const styles = StyleSheet.create({
 	memberText: { 
         color: "#333" 
     },
-	checkboxRow: { 
-        flexDirection: "row", 
-        alignItems: "center", 
-        marginTop: 8, 
-        marginBottom: 20,
-        marginHorizontal: 10,
-    },
-	checkbox: {
-		width: 20,
-		height: 20,
-		borderWidth: 1,
-		borderColor: "#CFCFCF",
-		borderRadius: 4,
-		justifyContent: "center",
-		alignItems: "center",
-	},
-	checkboxInner: { 
-        width: 12, 
-        height: 12, 
-        backgroundColor: "#6C1ED6", 
-        borderRadius: 2 
-    },
 	continueBtn: { 
         marginTop: 24, 
         width: "100%", 
@@ -300,5 +340,15 @@ const styles = StyleSheet.create({
         fontSize: 16, 
         color: "#333" 
     },
+	amountInput: {
+		width: 100,
+		height: 40,
+		borderWidth: 1,
+		borderColor: "#DCDCDC",
+		borderRadius: 8,
+		paddingHorizontal: 10,
+		backgroundColor: "#fff",
+		textAlign: 'right'
+	},
 });
 
