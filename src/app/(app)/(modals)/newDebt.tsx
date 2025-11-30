@@ -1,28 +1,24 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Input from "@/components/Input";
-import {Button} from "@/components/Button";
+import { Button } from "@/components/Button";
+import DebtModalHeader from "@/components/debts/DebtModalHeader";
+import { useNewDebtForm } from "@/hooks/useNewDebtForm";
 
 export default function NewDebtScreen() {
     const router = useRouter();
-    const [concept, setConcept] = useState("");
-    const [amount, setAmount] = useState("");
-    const [description, setDescription] = useState("");
-    const [amountWarning, setAmountWarning] = useState(false);
-
-    const canContinue = concept.trim() !== "" && amount.trim() !== "" && description.trim() !== "";
-
-    const handleAmountChange = (text: string) => {
-        if (/[^0-9.]/.test(text)) {
-            setAmountWarning(true);
-        } else {
-            setAmountWarning(false);
-        }
-        const numericText = text.replace(/[^0-9.]/g, "");
-        setAmount(numericText);
-    };
+    const {
+        concept,
+        setConcept,
+        amount,
+        description,
+        setDescription,
+        amountWarning,
+        canContinue,
+        handleAmountChange,
+    } = useNewDebtForm();
 
     const handleContinue = () => {
         router.push({
@@ -33,12 +29,7 @@ export default function NewDebtScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-            <View style={styles.header}>
-                <Text style={styles.title}>Nueva deuda</Text>
-                <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
-                    <Text style={styles.closeText}>✕</Text>
-                </TouchableOpacity>
-            </View>
+            <DebtModalHeader title="Nueva deuda" action="back"/>
             <Input
                 label="Concepto"
                 value={concept}
@@ -83,32 +74,6 @@ const styles = StyleSheet.create({
         backgroundColor: "#f5f5f5",
         padding: 24,
         paddingTop: 36,
-    },
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: 12,
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: "700",
-        color: "#555",
-        textAlign: "center",
-        flex: 1,
-    },
-    closeBtn: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: "#e5e5e5",
-        alignItems: "center",
-        justifyContent: "center",
-        marginLeft: 8,
-    },
-    closeText: {
-        fontSize: 22,
-        color: "#555",
     },
     input: {
         marginBottom: 0,

@@ -4,7 +4,7 @@ import { authService } from "@service/authService";
 import { Button } from "@/components/Button";
 import { StyleSheet } from "react-native";
 import { router } from "expo-router";
-import debtService  from "@/services/debtService";
+import friendService from "@/services/friendService";
 
 export default function ProfileView() {
     const { profile } = useAuth();
@@ -24,12 +24,13 @@ export default function ProfileView() {
         const last = user?.lastName?.charAt(0) || "";
         return `${first}${last}`.toUpperCase();
     };
-    const handleFetchDebts = async () => {
+
+    const handleFetchFriends = async () => {
         try {
-            const result = await debtService.fetchQuickDebts("DEBTOR", "PENDING");
-            console.log("Debts JSON:", result);
+            const result = await friendService.search("Ja"); 
+            console.log("Friends search result:", result);
         } catch (error) {
-            console.log("Error fetching debts:", error);
+            console.log("Error fetching friends:", error);
         }
     };
 
@@ -79,7 +80,7 @@ export default function ProfileView() {
                 />
                 <Button
                     title="Ir a Playground"
-                    onPress={handleFetchDebts}
+                    onPress={handleFetchFriends}
                     style={{ backgroundColor: "#6C1ED6", marginTop: 8 }}
                     textStyle={{ color: "white" }}
                 />

@@ -1,7 +1,8 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { Debt } from "@type/Debt";
+import { Debt, DebtStatusText } from "@type/Debt";
 import StatusIcon from "@asset/icon/icon_status.svg";
+import AvatarInitials from "@/components/AvatarInitials";
 
 interface CardDebtProps {
     debt: Debt;
@@ -21,38 +22,53 @@ const formatAmount = (amount: number) => {
     });
 };
 
-const formatTitle = (title: string) => {
-    if (title.length > 14) {
-        return title.slice(0, 13) + "...";
-    }
-    return title;
+const formatTitle = (title?: string, purpose?: string) => {
+    const value = title ?? purpose ?? "Sin título";
+    return value.length > 14 ? value.slice(0, 13) + "..." : value;
 };
 
-export const CardDebt: React.FC<CardDebtProps> = ({ debt, onSettle, onPress }) => (
-    <TouchableOpacity style={styles.card} activeOpacity={0.95} onPress={() => onPress?.(debt.id)}>
-        <View style={styles.row}>
-            <View style={styles.titleContainer}>
-                <Text
-                    style={styles.title}
-                >
-                    {formatTitle(debt.title)}
-                </Text>
-                <Text style={styles.creditor}>{debt.creditor}</Text>
-            </View>
-            <Text style={styles.amount}>
-                {formatAmount(debt.amount)}
-            </Text>
-        </View>
+const CardDebt: React.FC<CardDebtProps> = ({ debt, onSettle, onPress }) => {
+    const creditorParts = debt.creditor?.split(" ") ?? [];
+    const firstName = creditorParts[0] ?? "";
+    const lastName = creditorParts[1] ?? "";
+
+    return (
         <TouchableOpacity
-            style={styles.settleBtn}
-            onPress={() => onSettle?.(debt.id)}
-            activeOpacity={0.8}
+            style={styles.card}
+            activeOpacity={0.95}
+            onPress={() => onPress?.(debt.id)}
         >
-            <StatusIcon width={22} height={22} style={styles.checkIcon} />
-            <Text style={styles.settleText}>Estatus</Text>
+            <View style={styles.row}>
+                <View style={styles.titleContainer}>
+                    <Text style={styles.title}>
+                        {formatTitle(debt.title, debt.purpose)}
+                    </Text>
+                    <Text style={styles.creditor}>{debt.creditor ?? ""}</Text>
+                </View>
+                <Text style={styles.amount}>
+                    {formatAmount(debt.amount ?? 0)}
+                </Text>
+            </View>
+            <TouchableOpacity
+                style={styles.settleBtn}
+                onPress={() => onSettle?.(debt.id)}
+                activeOpacity={0.8}
+            >
+                <StatusIcon width={22} height={22} style={styles.checkIcon} />
+                <Text style={styles.settleText}>
+                    {DebtStatusText[debt.status as keyof typeof DebtStatusText] ?? "Desconocido"}
+                </Text>
+            </TouchableOpacity>
+            <View style={styles.avatarContainer}>
+                <AvatarInitials
+                    firstName={firstName}
+                    lastName={lastName}
+                    size={32}
+                />
+            </View>
         </TouchableOpacity>
-    </TouchableOpacity>
-);
+    );
+};
 
 const styles = StyleSheet.create({
     card: {
@@ -60,6 +76,7 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         padding: 20,
         marginBottom: 24,
+        position: "relative",
     },
     row: {
         flexDirection: "row",
@@ -106,6 +123,11 @@ const styles = StyleSheet.create({
         color: "#6C1AEF",
         fontWeight: "bold",
         fontSize: 17,
+    },
+    avatarContainer: {
+        position: "absolute",
+        bottom: 12,
+        right: 12,
     },
 });
 

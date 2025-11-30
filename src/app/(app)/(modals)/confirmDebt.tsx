@@ -1,23 +1,16 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList } from "react-native";
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import DebtInfo from "@/components/debts/DebtInfo";
 import Input from "@/components/Input";
 import { Button } from "@/components/Button";
 import { authService } from "@/services/authService";
+import DebtModalHeader from "@/components/debts/DebtModalHeader";
+import FriendSuggestionsList from "@/components/debts/FriendSuggestionsList";
+import { useDebtFriendSuggestions } from "@/hooks/useDebtFriendSuggestions";
 
-const MOCK_FRIENDS = [
-    { id: "1", name: "Tony Polanco" },
-    { id: "2", name: "Ana López" },
-    { id: "3", name: "Carlos Ruiz" },
-    { id: "4", name: "Taría García" },
-    { id: "5", name: "Tuis Fernández" },
-    { id: "6", name: "Tuis Martínez" },
-    
-];
-
-export default function FinishDebtScreen() {
+export default function ConfirmDebtScreen() {
     const router = useRouter();
     const { concept = "", amount = "0", description = "" } = useLocalSearchParams();
 
@@ -26,11 +19,7 @@ export default function FinishDebtScreen() {
     const [selectedFriend, setSelectedFriend] = useState<{ id: string; name: string } | null>(null);
     const [loading, setLoading] = useState(false);
 
-    const friendSuggestions = targetName.length > 0
-        ? MOCK_FRIENDS.filter(f =>
-            f.name.toLowerCase().includes(targetName.toLowerCase())
-        )
-        : [];
+    const { friendSuggestions, loadingSuggestions } = useDebtFriendSuggestions(myRole, targetName);
 
     const canCreate = targetName.trim().length > 0 && !loading;
 
@@ -77,15 +66,7 @@ export default function FinishDebtScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-            <View style={styles.header}>
-                <Text style={styles.title}>Nueva deuda</Text>
-                <TouchableOpacity
-                    style={styles.closeBtn}
-                    onPress={() => router.replace("/debts")}
-                >
-                    <Text style={styles.closeText}>✕</Text>
-                </TouchableOpacity>
-            </View>
+            <DebtModalHeader title="Nueva deuda" />
             <DebtInfo
                 concept={String(concept)}
                 description={String(description)}
@@ -122,22 +103,11 @@ export default function FinishDebtScreen() {
                 placeholder={`Nombre del ${myRole === "CREDITOR" ? "deudor" : "acreedor"}`}
                 style={styles.input}
             />
-            {/* Sugerencias de amigos */}
-            {friendSuggestions.length > 0 && !selectedFriend && (
-                <View style={styles.suggestionsContainer}>
-                    <FlatList
-                        data={friendSuggestions}
-                        keyExtractor={item => item.id}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                                style={styles.suggestionItem}
-                                onPress={() => handleSelectFriend(item)}
-                            >
-                                <Text style={styles.suggestionText}>{item.name}</Text>
-                            </TouchableOpacity>
-                        )}
-                    />
-                </View>
+            {myRole === "CREDITOR" && friendSuggestions.length > 0 && !selectedFriend && (
+                <FriendSuggestionsList
+                    suggestions={friendSuggestions}
+                    onSelect={handleSelectFriend}
+                />
             )}
             <Button
                 title={loading ? "Creando..." : "Crear"}
@@ -158,32 +128,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#f5f5f5",
         padding: 16,
-    },
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: 12,
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: "700",
-        color: "#555",
-        textAlign: "center",
-        flex: 1,
-    },
-    closeBtn: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: "#e5e5e5",
-        alignItems: "center",
-        justifyContent: "center",
-        marginLeft: 8,
-    },
-    closeText: {
-        fontSize: 22,
-        color: "#555",
     },
     input: {
         marginTop: 8,
@@ -215,25 +159,5 @@ const styles = StyleSheet.create({
     roleTextActive: {
         color: "#fff",
         fontWeight: "700",
-    },
-    suggestionsContainer: {
-        marginTop: 4,
-        marginBottom: 8,
-        backgroundColor: "#fff",
-        borderRadius: 8,
-        elevation: 2,
-        shadowColor: "#000",
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        shadowOffset: { width: 0, height: 1 },
-    },
-    suggestionItem: {
-        padding: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: "#eee",
-    },
-    suggestionText: {
-        fontSize: 16,
-        color: "#555",
     },
 });

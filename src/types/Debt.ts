@@ -3,6 +3,8 @@ export interface Debt {
     title: string;
     creditor: string;
     amount: number;
+    purpose?: string;
+    status?: DebtStatus;
 }
 
 export type DebtStatus =
@@ -41,3 +43,12 @@ export interface QuickDebt {
     role: "DEBTOR" | "CREDITOR";
     targetUserName: string;
 }
+
+export const DebtStatusText: Record<DebtStatus, string> = {
+    PENDING: "Pendiente",
+    ACCEPTED: "Aceptada",
+    REJECTED: "Rechazada",
+    PAYMENT_CONFIRMATION_PENDING: "Confirmación pendiente",
+    PAYMENT_CONFIRMATION_REJECTED: "Pago rechazado",
+    PAYMENT_CONFIRMED: "Pago confirmado",
+};

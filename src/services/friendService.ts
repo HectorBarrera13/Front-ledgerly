@@ -133,6 +133,31 @@ const friendService = {
             );
         }
     },
+
+    search: async (query: string): Promise<Friend[]> => {
+        try {
+            const isPhone = /^\d+$/.test(query.replace(/\D/g, ""));
+            const field = isPhone ? "PHONE" : "NAME";
+            const response = await api.get<{ items: Friend[] }>(
+                `/friends/search?query=${encodeURIComponent(query)}&field=${field}`
+            );
+            return response.items;
+        } catch (error) {
+            if (error instanceof ApiError) {
+                const message = manageApiError(error.status, {
+                    default: {
+                        title: "Error al buscar amigos",
+                        description: "Ocurrió un error inesperado al buscar amigos.",
+                    },
+                });
+                throw new PresentableError(message.title, message.description);
+            } else {
+                throw new Error(
+                    error instanceof Error ? error.message : "Unknown error"
+                );
+            }
+        }
+    },
 };
 
 export default friendService;

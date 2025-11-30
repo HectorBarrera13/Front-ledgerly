@@ -1,37 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import DebtInfo from "@/components/debts/DebtInfo";
-import {Button} from "@/components/Button";
+import { Button } from "@/components/Button";
 import CloseButton from "@/components/CloseButton";
-import debtService from "@/services/debtService";
+import { DebtStatusText } from "@/types/Debt";
+import { useDebtDetails } from "@/hooks/useDebtDetails";
+import {
+    reportPayment,
+    verifyPayment,
+    rejectPayment,
+    quickConfirm,
+} from "@/libs/debtActions";
 
 export default function DebtDetailScreen() {
     const { id, mode, type } = useLocalSearchParams();
     const router = useRouter();
-    const [debt, setDebt] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchDebt = async () => {
-            setLoading(true);
-            try {
-                let result;
-                if (type === "betweenUsers") {
-                    result = await debtService.fetchDebtsBetweenUsersById(id as string);
-                } else {
-                    result = await debtService.fetchQuickDebtById(id as string);
-                }
-                setDebt(result);
-            } catch (error) {
-                setDebt(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-        if (id) fetchDebt();
-    }, [id, type]);
+    const { debt, setDebt, loading } = useDebtDetails(id as string, type as string);
 
     if (loading) {
         return (
@@ -53,7 +39,7 @@ export default function DebtDetailScreen() {
     const concept = debt.purpose;
     const description = debt.description;
     const amount = debt.amount;
-    const status = debt.status;
+    const status = debt.status as keyof typeof DebtStatusText;
     let userLabel = "";
     let userName = "";
 
@@ -72,13 +58,11 @@ export default function DebtDetailScreen() {
 
     const finalMode = mode || "";
 
-    const decodedMessage = finalMode === "receivable"
-        ? "¡La deuda será marcada como saldada cuando el deudor confirme el pago!"
-        : "¡La deuda será marcada como pagada cuando el acreedor confirme el pago!";
-
-    const decodedTitle = finalMode === "receivable"
-        ? "Hemos notificado al deudor"
-        : "Hemos notificado al acreedor";
+    const isAcceptedPayable = type === "betweenUsers" && finalMode === "payable" && status === "ACCEPTED";
+    const isPendingConfirmationReceivable = type === "betweenUsers" && finalMode === "receivable" && status === "PAYMENT_CONFIRMATION_PENDING";
+    const isEditable = status === "PENDING" || status === "REJECTED";
+    const isQuickPending = type === "quick" && (finalMode === "payable" || finalMode === "receivable") && status !== "PAYMENT_CONFIRMED";
+    const isRejectedPayable = type === "betweenUsers" && finalMode === "payable" && status === "PAYMENT_CONFIRMATION_REJECTED";
 
     return (
         <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -101,20 +85,66 @@ export default function DebtDetailScreen() {
 
                 <Text style={styles.sectionTitle}>Estatus</Text>
                 <View style={styles.inputBox}>
-                    <Text style={styles.inputText}>{status}</Text>
+                    <Text style={styles.inputText}>{DebtStatusText[status] ?? status}</Text>
                 </View>
 
                 <View style={{ height: 12 }} />
 
-                <Button
-                    title={finalMode === "receivable" ? "Marcar como saldada" : "Marcar como pagada"}
-                    onPress={() => {
-                        const title = encodeURIComponent(decodedTitle);
-                        const message = encodeURIComponent(decodedMessage);
-                        router.push(`(modals)/successNotification?title=${title}&message=${message}`);
-                    }}
-                    style={styles.payButton}
-                />
+                {isAcceptedPayable && (
+                    <Button
+                        title="Marcar como pagada"
+                        onPress={() => reportPayment(debt, setDebt, router)}
+                        style={styles.payButton}
+                    />
+                )}
+
+                {isPendingConfirmationReceivable && (
+                    <View>
+                        <Button
+                            title="Confirmar pago"
+                            onPress={() => verifyPayment(debt, setDebt, router)}
+                            style={styles.payButton}
+                        />
+                        <Button
+                            title="Rechazar pago"
+                            onPress={() => rejectPayment(debt, setDebt, router)}
+                            style={[styles.payButton, { backgroundColor: "#f8653c", marginTop: 8 }]}
+                        />
+                    </View>
+                )}
+
+                {isEditable && (
+                    <Button
+                        title="Editar deuda"
+                        onPress={() => {
+                            if (!debt.id) {
+                                console.log("ERROR: debt.id is undefined", debt);
+                                return;
+                            }
+                            router.push({
+                                pathname: "editDebt",
+                                params: { id: debt.id, type, mode }
+                            });
+                        }}
+                        style={[styles.payButton, { backgroundColor: "#555" }]}
+                    />
+                )}
+
+                {isQuickPending && (
+                    <Button
+                        title={finalMode === "receivable" ? "Marcar como saldada" : "Marcar como pagada"}
+                        onPress={() => quickConfirm(debt, setDebt, router)}
+                        style={styles.payButton}
+                    />
+                )}
+                {isRejectedPayable && (
+                    <Button
+                        title={finalMode === "payable" ? "Marcar como saldada" : "Marcar como pagada"}
+                        onPress={() => reportPayment(debt, setDebt, router)}
+                        style={styles.payButton}
+                    />
+                )}
+
             </ScrollView>
         </SafeAreaView>
     );
