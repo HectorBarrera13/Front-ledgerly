@@ -1,0 +1,202 @@
+import React from "react";
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import DebtInfo from "@/components/debts/DebtInfo";
+import { Button } from "@/components/Button";
+import CloseButton from "@/components/CloseButton";
+import { DebtStatusText } from "@/types/Debt";
+import { useDebtDetails } from "@/hooks/useDebtDetails";
+import {
+    reportPayment,
+    verifyPayment,
+    rejectPayment,
+    quickConfirm,
+    resendDebt,
+} from "@/libs/debtActions";
+
+export default function DebtDetailScreen() {
+    const { id, mode, type } = useLocalSearchParams();
+    const router = useRouter();
+    const { debt, setDebt, loading } = useDebtDetails(id as string, type as string);
+
+    if (loading) {
+        return (
+            <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <ActivityIndicator size="large" color="#6C1ED6" />
+            </SafeAreaView>
+        );
+    }
+
+    if (!debt) {
+        return (
+            <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <Text>No se encontró la deuda.</Text>
+            </SafeAreaView>
+        );
+    }
+
+    const isBetween = debt.debtorSummary && debt.creditorSummary;
+    const concept = debt.purpose;
+    const description = debt.description;
+    const amount = debt.amount;
+    const status = debt.status as keyof typeof DebtStatusText;
+    let userLabel = "";
+    let userName = "";
+
+    if (isBetween) {
+        if (mode === "receivable") {
+            userLabel = "Deudor";
+            userName = `${debt.debtorSummary.firstName} ${debt.debtorSummary.lastName}`;
+        } else {
+            userLabel = "Acreedor";
+            userName = `${debt.creditorSummary.firstName} ${debt.creditorSummary.lastName}`;
+        }
+    } else {
+        userLabel = "Usuario";
+        userName = debt.targetUserName ?? "";
+    }
+
+    const finalMode = mode || "";
+
+    const isAcceptedPayable = type === "betweenUsers" && finalMode === "payable" && status === "ACCEPTED";
+    const isPendingConfirmationReceivable = type === "betweenUsers" && finalMode === "receivable" && status === "PAYMENT_CONFIRMATION_PENDING";
+    const isEditable = status === "PENDING";
+    const isQuickPending = type === "quick" && (finalMode === "payable" || finalMode === "receivable") && status !== "PAYMENT_CONFIRMED";
+    const isRejectedPayable = type === "betweenUsers" && finalMode === "payable" && status === "PAYMENT_CONFIRMATION_REJECTED";
+    const isResendable = type === "betweenUsers" && (status === "REJECTED");
+
+    return (
+        <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+            <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>Deuda por {finalMode === "receivable" ? "cobrar" : "pagar"}</Text>
+                    <CloseButton style={styles.closeButton} />
+                </View>
+
+                <DebtInfo
+                    concept={concept}
+                    description={description}
+                    amount={amount}
+                />
+
+                <Text style={styles.sectionTitle}>{userLabel}</Text>
+                <View style={styles.inputBox}>
+                    <Text style={styles.inputText}>{userName}</Text>
+                </View>
+
+                <Text style={styles.sectionTitle}>Estatus</Text>
+                <View style={styles.inputBox}>
+                    <Text style={styles.inputText}>{DebtStatusText[status] ?? status}</Text>
+                </View>
+
+                <View style={{ height: 12 }} />
+
+                {isAcceptedPayable && (
+                    <Button
+                        title="Marcar como pagada"
+                        onPress={() => reportPayment(debt, setDebt, router)}
+                        style={styles.payButton}
+                    />
+                )}
+
+                {isPendingConfirmationReceivable && (
+                    <View>
+                        <Button
+                            title="Confirmar pago"
+                            onPress={() => verifyPayment(debt, setDebt, router)}
+                            style={styles.payButton}
+                        />
+                        <Button
+                            title="Rechazar pago"
+                            onPress={() => rejectPayment(debt, setDebt, router)}
+                            style={[styles.payButton, { backgroundColor: "#f8653c", marginTop: 8 }]}
+                        />
+                    </View>
+                )}
+
+                {isEditable && (
+                    <Button
+                        title="Editar deuda"
+                        onPress={() => {
+                            if (!debt.id) {
+                                console.log("ERROR: debt.id is undefined", debt);
+                                return;
+                            }
+                            router.push({
+                                pathname: "editDebt",
+                                params: { id: debt.id, type, mode }
+                            });
+                        }}
+                        style={[styles.payButton, { backgroundColor: "#555" }]}
+                    />
+                )}
+
+                {isQuickPending && (
+                    <Button
+                        title={finalMode === "receivable" ? "Marcar como saldada" : "Marcar como pagada"}
+                        onPress={() => quickConfirm(debt, setDebt, router)}
+                        style={styles.payButton}
+                    />
+                )}
+                {isRejectedPayable && (
+                    <Button
+                        title={finalMode === "payable" ? "Marcar como saldada" : "Marcar como pagada"}
+                        onPress={() => reportPayment(debt, setDebt, router)}
+                        style={styles.payButton}
+                    />
+                )}
+                {isResendable && (
+                    <Button
+                        title="Reenviar deuda"
+                        onPress={() => resendDebt(debt, setDebt, router)}
+                        style={styles.payButton}
+                    />
+                )}
+            </ScrollView>
+        </SafeAreaView>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: "#fff",
+        padding: 16,
+    },
+    header: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 24,
+    },
+    headerTitle: {
+        fontSize: 22,
+        fontWeight: "bold",
+        color: "#6C1ED6",
+    },
+    closeButton: {
+        marginLeft: 8,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: "bold",
+        marginTop: 24,
+        marginBottom: 8,
+        color: "#333",
+    },
+    inputBox: {
+        backgroundColor: "#F5F5F7",
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 8,
+    },
+    inputText: {
+        fontSize: 16,
+        color: "#333",
+    },
+    payButton: {
+        marginTop: 24,
+        backgroundColor: "#6C1ED6",
+    },
+});
