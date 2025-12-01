@@ -20,12 +20,6 @@ export default function GroupsView() {
 
     return (
         <View style={styles.container}>
-            {/* este botón es para probar lo de la nueva deuda */}
-            {/* <Button
-                title="Nueva deuda (prueba)"
-                onPress={() => router.push("/(modals)/newGroupDebt")}
-                style={{ marginBottom: 12, backgroundColor: "#6C1ED6", borderRadius: 12, height: 48, justifyContent: "center" }}
-            /> */}
             <FlatList
                 data={sortedGroups}
                 keyExtractor={(item, idx) => item.groupId ?? String(idx)}

@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import StatusIcon from "@asset/icon/icon_status.svg";
+import { DebtStatusText } from "@/types/Debt";
 
 export interface GroupDebt {
     id: string;
@@ -8,7 +9,7 @@ export interface GroupDebt {
     description: string;
     amount: number;
     currency: string;
-    status: string;
+    status: keyof typeof DebtStatusText;
 }
 
 interface CardGroupDebtProps {
@@ -54,7 +55,7 @@ const CardGroupDebt: React.FC<CardGroupDebtProps> = ({ debt, onPress }) => {
             <View style={styles.settleBtn}>
                 <StatusIcon width={22} height={22} style={styles.checkIcon} />
                 <Text style={styles.settleText}>
-                    {debt.status}
+                    {DebtStatusText[debt.status]}
                 </Text>
             </View>
         </TouchableOpacity>
