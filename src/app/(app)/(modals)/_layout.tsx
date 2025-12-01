@@ -61,6 +61,14 @@ export default function ModalsLayout() {
                     title: "Detalles del Grupo",
                 }}
             />
+            <Stack.Screen
+                name="groupDebtDetails"
+                options={{
+                    headerTitleAlign: "center",
+                    headerShown: false,
+                    title: "Detalles de la Deuda Grupal",
+                }}
+            />
         </Stack>
     );
 }

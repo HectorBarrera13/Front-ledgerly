@@ -61,17 +61,31 @@ export default function GroupDetailsScreen() {
 
                         <View style={styles.separator} />
 
-                        {debts.map((debt) => (
-                            <CardGroupDebt
-                                key={debt.id}
-                                debt={debt}
-                                onPress={(id) => router.push(`/(modals)/debtDetails?id=${id}&mode=payable&type=group`)}
-                            />
-                        ))}
+                        {debts
+                            .filter((debt) => debt.status !== "PAYMENT_CONFIRMED")
+                            .map((debt) => (
+                                <CardGroupDebt
+                                    key={debt.id}
+                                    debt={debt}
+                                    onPress={() =>
+                                        router.push({
+                                            pathname: "/(modals)/groupDebtDetails",
+                                            params: { groupId, id: debt.id }
+                                        })
+                                    }
+                                />
+                            ))}
                     </View>
                 </ScrollView>
                 <View style={styles.addBtnContainer}>
-                    <ButtonAdd onPress={() => router.push("/(modals)/newGroupDebt")} />
+                    <ButtonAdd
+                        onPress={() =>
+                            router.push({
+                                pathname: "/(modals)/newGroupDebt",
+                                params: { groupId }
+                            })
+                        }
+                    />
                 </View>
             </View>
         </SafeAreaView>
