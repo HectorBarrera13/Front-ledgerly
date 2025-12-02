@@ -35,9 +35,17 @@ interface FetchOptions extends Omit<RequestInit, "method" | "body" | "signal"> {
 
 const timeoutDurationDefault = 30000; // 30 segundos
 
+type refreshHook = () => Promise<boolean>;
+
 class ApiClient {
     private baseUrl: string;
     private accessToken: string | null = null;
+    private accessExpiry: number | null = null;
+    private refreshHook: refreshHook | null = null;
+
+    public setRefreshHook(hook: refreshHook) {
+        this.refreshHook = hook;
+    }
 
     get url() {
         return this.baseUrl;
@@ -46,11 +54,10 @@ class ApiClient {
     constructor(baseUrl: string) {
         this.baseUrl = baseUrl;
     }
-    setAccessToken(token: string) {
+
+    setAccessToken(token: string, expiry: number) {
         this.accessToken = token;
-    }
-    removeAccessToken() {
-        this.accessToken = null;
+        this.accessExpiry = expiry;
     }
 
     private async fetchWrapper<T, R>(
@@ -59,6 +66,20 @@ class ApiClient {
         method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
         options?: FetchOptions
     ): Promise<R> {
+        if (this.accessExpiry && Date.now() >= this.accessExpiry) {
+            if (this.refreshHook) {
+                const refreshed = await this.refreshHook();
+                if (refreshed) {
+                    return this.fetchWrapper<T, R>(
+                        endpoint,
+                        data,
+                        method,
+                        options
+                    );
+                }
+            }
+        }
+        console.log(`API Request: ${method} ${endpoint}`);
         const controller = new AbortController();
         const timeout = options?.timeout ?? timeoutDurationDefault;
         const id = setTimeout(() => controller.abort(), timeout);
@@ -94,29 +115,41 @@ class ApiClient {
 
             clearTimeout(id);
             const contentType = response.headers.get("Content-Type");
+            if (!response.ok && response.status === 401) {
+                if (this.refreshHook) {
+                    const refreshed = await this.refreshHook();
+                    if (refreshed) {
+                        return this.fetchWrapper<T, R>(
+                            endpoint,
+                            data,
+                            method,
+                            options
+                        );
+                    }
+                }
+            }
 
-            if (!response.ok) {
-                if (contentType && contentType.includes("application/json")) {
+            if (contentType && contentType.includes("application/json")) {
+                if (!response.ok) {
                     const errorData = await response.json();
                     const errorMessage =
                         errorData.message || "An error occurred";
                     throw new ApiError(errorMessage, response.status);
                 } else {
+                    const responseData = await response.json();
+                    return snakeToCamel(responseData) as R;
+                }
+            } else {
+                if (!response.ok) {
                     throw new ApiError(
                         `HTTP error! status: ${response.status}`,
                         response.status
                     );
                 }
-            }
-
-            if (contentType && contentType.includes("application/json")) {
-                // La respuesta tiene contenido JSON, analízalo.
-                const responseData = await response.json();
-                return snakeToCamel(responseData) as R;
-            } else {
                 return null as unknown as R;
             }
         } catch (error) {
+            console.error("Error during fetchWrapper:", error);
             // 1. Si nosotros lanzamos ApiError manualmente arriba (400, 500, etc)
             if (error instanceof ApiError) {
                 throw error;
@@ -144,20 +177,26 @@ class ApiClient {
         requestInit?: RequestInit
     ): Promise<Response> {
         const url = `${this.baseUrl}${input}`;
+        return await fetch(url, requestInit);
+    }
+
+    async fetchWithAuth(
+        input: URL | RequestInfo,
+        requestInit?: RequestInit
+    ): Promise<Response> {
+        const url = `${this.baseUrl}${input}`;
         const headers = {
+            ...(requestInit?.headers || {}),
             ...clientTypeHeader,
             ...(this.accessToken
                 ? { Authorization: `Bearer ${this.accessToken}` }
                 : {}),
         };
-        const response = await fetch(url, { ...requestInit, headers });
-        if (!response.ok) {
-            throw new ApiError(
-                `HTTP error! status: ${response.status}`,
-                response.status
-            );
-        }
-        return response;
+        const finalRequestInit = {
+            ...requestInit,
+            headers,
+        };
+        return await fetch(url, finalRequestInit);
     }
 
     post<R>(endpoint: string, data: any, options?: FetchOptions): Promise<R>;

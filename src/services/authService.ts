@@ -1,10 +1,5 @@
 import { Profile } from "@type/LoginResponse";
-import apiClient, {
-    ApiClient,
-    ApiError,
-    NetworkError,
-    TimeoutError,
-} from "@service/apiClient";
+import apiClient, { ApiClient } from "@service/apiClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Account } from "@type/Account";
 import { User } from "@type/User";
@@ -59,19 +54,17 @@ export interface NewDebtPayload {
     targetUserName: string;
 }
 
-
-type AuthStateCallback = (session: Profile | null) => void;
-
-const REFRESH_THRESHOLD_MS = 3 * 60 * 1000; // 3 minutes
+const REFRESH_THRESHOLD_MS = 1 * 60 * 1000; // 1 minute
 
 export class AuthService {
     private api: ApiClient;
     private profile: Profile | null = null;
     private accessToken: string | null = null;
     private accessTokenExpiresAt: number | null = null;
-    private refreshToken: string | null = null;
+    private refreshPromise: Promise<void> | null = null;
     private refreshTimeoutId: NodeJS.Timeout | null = null;
-    private authStateListeners: Set<AuthStateCallback> = new Set();
+    private authStateListeners: Set<(profile: Profile | null) => void> =
+        new Set();
 
     private readonly STORAGE_KEYS = {
         ACCESS_TOKEN: "auth_access_token",
@@ -82,168 +75,125 @@ export class AuthService {
 
     constructor(apiClient: ApiClient) {
         this.api = apiClient;
-        this.initialize();
+        this.api.setRefreshHook(() => this.handleUnauthorizedAndRetry());
+        this.loadInitialSession();
     }
 
-    private async initialize() {
-        try {
-            const accessToken = await AsyncStorage.getItem(
-                this.STORAGE_KEYS.ACCESS_TOKEN
-            );
-            const refreshToken = await AsyncStorage.getItem(
-                this.STORAGE_KEYS.REFRESH_TOKEN
-            );
-            const expiresAt = await AsyncStorage.getItem(
-                this.STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT
-            );
-            const profile = await AsyncStorage.getItem(
-                this.STORAGE_KEYS.PROFILE
-            );
-
-            if (accessToken && refreshToken && expiresAt && profile) {
-                this.accessToken = accessToken;
-                this.refreshToken = refreshToken;
-                this.accessTokenExpiresAt = parseInt(expiresAt, 10);
-                this.profile = JSON.parse(profile);
-
-                this.api.setAccessToken(this.accessToken);
-
-                if (this.isTokenExpiringSoon()) {
-                    this.refreshAccessToken();
-                } else {
-                    this.scheduleTokenRefresh();
-                }
-
-                this.notifyAuthStateChanged();
-            }
-        } catch (error) {
-            console.error("Failed to initialize AuthService:", error);
-            this.clearSession();
-        }
-    }
-
-    private async refreshAccessToken(): Promise<void> {
-        if (!this.refreshToken) {
-            this.clearSession();
-            return;
-        }
-        try {
-            const response = await this.api.post<RefreshResponse>(
-                "/auth/refresh",
-                null,
-                {
-                    headers: {
-                        Authorization: `Bearer ${this.refreshToken}`,
-                    },
-                }
-            );
-            this.accessToken = response.accessToken;
-            this.accessTokenExpiresAt = new Date(response.expiresAt).getTime();
-            const actualAuth: AuthResponse = {
-                account: this.profile!.account,
-                user: this.profile!.user,
-                token: {
-                    accessToken: this.accessToken,
-                    expiresAt: new Date(
-                        this.accessTokenExpiresAt!
-                    ).toISOString(),
-                    refreshToken: this.refreshToken!,
-                },
-            };
-            await this.setSession(actualAuth);
-        } catch (error) {
-            if (
-                error instanceof NetworkError ||
-                error instanceof TimeoutError ||
-                (error instanceof ApiError && error.status === 400)
-            ) {
-                setTimeout(() => {
-                    this.refreshAccessToken();
-                }, 10000); // Retry after 10 seconds
-            } else {
-                this.clearSession();
-            }
-        }
-    }
-
-    private async clearSession(): Promise<void> {
-        this.profile = null;
-        this.accessToken = null;
-        this.refreshToken = null;
-        this.accessTokenExpiresAt = null;
-
-        try {
-            await Promise.all([
-                AsyncStorage.removeItem(this.STORAGE_KEYS.ACCESS_TOKEN),
-                AsyncStorage.removeItem(this.STORAGE_KEYS.REFRESH_TOKEN),
-                AsyncStorage.removeItem(
-                    this.STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT
-                ),
-                AsyncStorage.removeItem(this.STORAGE_KEYS.PROFILE),
-            ]);
-
-            this.api.removeAccessToken();
-
-            if (this.refreshTimeoutId) {
-                clearTimeout(this.refreshTimeoutId);
-                this.refreshTimeoutId = null;
-            }
-
-            this.notifyAuthStateChanged();
-        } catch (error) {
-            throw new AuthError("Failed to clear session", "STORAGE_ERROR");
-        }
-    }
-
-    private async setSession(data: AuthResponse): Promise<void> {
-        this.profile = {
-            account: data.account,
-            user: data.user,
+    public onAuthStateChanged(
+        callback: (profile: Profile | null) => void
+    ): () => void {
+        this.authStateListeners.add(callback);
+        callback(this.profile);
+        return () => {
+            this.authStateListeners.delete(callback);
         };
-        this.accessToken = data.token.accessToken;
-        this.refreshToken = data.token.refreshToken;
-        this.accessTokenExpiresAt = new Date(data.token.expiresAt).getTime();
+    }
 
+    private notifyAuthStateChanged(): void {
+        this.authStateListeners.forEach((callback) => {
+            try {
+                callback(this.profile);
+            } catch (error) {
+                console.error("Error in auth state listener:", error);
+            }
+        });
+    }
+
+    private async loadInitialSession() {
         try {
-            await Promise.all([
-                AsyncStorage.setItem(
-                    this.STORAGE_KEYS.ACCESS_TOKEN,
-                    this.accessToken
-                ),
-                AsyncStorage.setItem(
-                    this.STORAGE_KEYS.REFRESH_TOKEN,
-                    this.refreshToken
-                ),
-                AsyncStorage.setItem(
-                    this.STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT,
-                    this.accessTokenExpiresAt.toString()
-                ),
-                AsyncStorage.setItem(
-                    this.STORAGE_KEYS.PROFILE,
-                    JSON.stringify(this.profile)
-                ),
-            ]);
-
-            this.api.setAccessToken(this.accessToken);
-            this.scheduleTokenRefresh();
-            this.notifyAuthStateChanged();
+            await this.loadStoredSession();
+            if (this.accessToken && this.accessTokenExpiresAt) {
+                this.scheduleTokenRefresh();
+            }
         } catch (error) {
-            this.clearSession();
-            throw new AuthError("Failed to set session", "STORAGE_ERROR");
+            console.warn("Failed to load initial session:", error);
+        } finally {
+            this.notifyAuthStateChanged();
         }
     }
 
-    private isTokenExpired(): boolean {
-        if (!this.accessTokenExpiresAt) return true;
-        return Date.now() > this.accessTokenExpiresAt;
-    }
+    private async handleUnauthorizedAndRetry(): Promise<boolean> {
+        if (this.refreshPromise) {
+            try {
+                await this.refreshPromise;
+                return true;
+            } catch (error) {
+                console.warn(
+                    "Error while waiting for ongoing token refresh:",
+                    error
+                );
+                return false;
+            }
+        }
 
-    private isTokenExpiringSoon(): boolean {
-        if (!this.accessTokenExpiresAt) return true;
-        return (
-            Date.now() + REFRESH_THRESHOLD_MS >
-            this.accessTokenExpiresAt - REFRESH_THRESHOLD_MS
-        );
+        this.refreshPromise = new Promise<void>(async (resolve, reject) => {
+            try {
+                const refreshToken = await AsyncStorage.getItem(
+                    this.STORAGE_KEYS.REFRESH_TOKEN
+                );
+                if (!refreshToken) {
+                    console.error(
+                        "No refresh token available for token refresh"
+                    );
+                    throw new AuthError(
+                        "No refresh token available",
+                        "NO_REFRESH_TOKEN",
+                        401
+                    );
+                }
+                const response = await this.api.fetch("/auth/refresh", {
+                    headers: {
+                        Authorization: `Bearer ${refreshToken}`,
+                    },
+                    method: "POST",
+                });
+
+                if (!response.ok) {
+                    throw new AuthError(
+                        `Failed to refresh token: ${response.statusText}`,
+                        "REFRESH_FAILED",
+                        response.status
+                    );
+                }
+
+                const data = await response.json();
+                const tokenData: RefreshResponse = {
+                    accessToken: data.access_token,
+                    expiresAt: data.expires_at,
+                };
+
+                await this.setSession(
+                    tokenData.accessToken,
+                    new Date(tokenData.expiresAt).getTime(),
+                    refreshToken
+                );
+                resolve();
+            } catch (error) {
+                console.error("Error during token refresh:", error);
+                const isPermanent =
+                    error instanceof AuthError &&
+                    (error.status === 400 ||
+                        error.status === 401 ||
+                        error.status === 403);
+                if (isPermanent) {
+                    console.error(
+                        "Permanent error during token refresh:",
+                        error
+                    );
+                    await this.clearSession();
+                }
+                reject(error);
+            } finally {
+                this.refreshPromise = null;
+            }
+        });
+
+        try {
+            await this.refreshPromise;
+            return true;
+        } catch (error) {
+            return false;
+        }
     }
 
     private scheduleTokenRefresh(): void {
@@ -257,70 +207,126 @@ export class AuthService {
 
         if (timeUntilRefresh > 0) {
             this.refreshTimeoutId = setTimeout(() => {
-                this.refreshAccessToken();
+                this.handleUnauthorizedAndRetry();
             }, timeUntilRefresh);
-        } else {
-            this.refreshAccessToken();
         }
     }
 
-    onAuthStateChanged(callback: AuthStateCallback): () => void {
-        this.authStateListeners.add(callback);
-        const currentSession = this.getSession();
-        callback(currentSession);
-
-        return () => {
-            this.authStateListeners.delete(callback);
-        };
-    }
-
-    private notifyAuthStateChanged(): void {
-        this.authStateListeners.forEach((callback) => {
-            try {
-                callback(this.getSession());
-            } catch (error) {
-                console.error("Error in auth state listener:", error);
+    private async loadStoredSession(): Promise<void> {
+        try {
+            const profile = await AsyncStorage.getItem(
+                this.STORAGE_KEYS.PROFILE
+            );
+            const accessToken = await AsyncStorage.getItem(
+                this.STORAGE_KEYS.ACCESS_TOKEN
+            );
+            const expiresAt = await AsyncStorage.getItem(
+                this.STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT
+            );
+            if (profile && accessToken && expiresAt) {
+                this.profile = JSON.parse(profile);
+                this.accessToken = accessToken;
+                this.accessTokenExpiresAt = parseInt(expiresAt, 10);
+                this.api.setAccessToken(
+                    this.accessToken,
+                    this.accessTokenExpiresAt
+                );
             }
-        });
+        } catch (error) {
+            console.error("Failed to load stored session:", error);
+            throw new AuthError(
+                "Failed to load stored session",
+                "STORAGE_ERROR"
+            );
+        }
     }
 
-    unsubscribe(): void {
-        this.authStateListeners.clear();
-        if (this.refreshTimeoutId) {
-            clearTimeout(this.refreshTimeoutId);
-            this.refreshTimeoutId = null;
+    private async clearSession(): Promise<void> {
+        try {
+            await Promise.all([
+                AsyncStorage.removeItem(this.STORAGE_KEYS.ACCESS_TOKEN),
+                AsyncStorage.removeItem(this.STORAGE_KEYS.REFRESH_TOKEN),
+                AsyncStorage.removeItem(
+                    this.STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT
+                ),
+                AsyncStorage.removeItem(this.STORAGE_KEYS.PROFILE),
+            ]);
+            this.profile = null;
+            this.accessToken = null;
+            this.accessTokenExpiresAt = null;
+            this.api.setAccessToken("", 0);
+            if (this.refreshTimeoutId) {
+                clearTimeout(this.refreshTimeoutId);
+                this.refreshTimeoutId = null;
+            }
+            this.notifyAuthStateChanged();
+        } catch (error) {
+            throw new AuthError("Failed to clear session", "STORAGE_ERROR");
+        }
+    }
+
+    private async setSession(
+        accessToken: string,
+        expiresAt: number,
+        refreshToken: string,
+        profile?: Profile
+    ): Promise<void> {
+        try {
+            await Promise.all([
+                AsyncStorage.setItem(
+                    this.STORAGE_KEYS.ACCESS_TOKEN,
+                    accessToken
+                ),
+                AsyncStorage.setItem(
+                    this.STORAGE_KEYS.REFRESH_TOKEN,
+                    refreshToken
+                ),
+                AsyncStorage.setItem(
+                    this.STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT,
+                    expiresAt.toString()
+                ),
+            ]);
+            if (profile) {
+                await AsyncStorage.setItem(
+                    this.STORAGE_KEYS.PROFILE,
+                    JSON.stringify(profile)
+                );
+                this.profile = profile;
+            }
+            this.accessToken = accessToken;
+            this.accessTokenExpiresAt = expiresAt;
+            this.api.setAccessToken(
+                this.accessToken,
+                this.accessTokenExpiresAt
+            );
+            this.scheduleTokenRefresh();
+            this.notifyAuthStateChanged();
+        } catch (error) {
+            console.error("Failed to set session in authService:", error);
+            throw new AuthError("Failed to set session", "STORAGE_ERROR");
         }
     }
 
     getSession(): Profile | null {
-        if (
-            !this.profile ||
-            !this.accessToken ||
-            !this.refreshToken ||
-            !this.accessTokenExpiresAt
-        ) {
-            return null;
-        }
-
         return this.profile;
     }
 
-    isAuthenticated(): boolean {
-        return (
-            this.profile !== null &&
-            this.accessToken !== null &&
-            !this.isTokenExpired()
-        );
-    }
-
-    async signUp(data: SignUpData): Promise<void> {
+    async signUp(data: SignUpData): Promise<Profile | null> {
         try {
             const response = await this.api.post<SignUpData, AuthResponse>(
                 "/auth/register",
                 data
             );
-            await this.setSession(response);
-            return;
+            await this.setSession(
+                response.token.accessToken,
+                new Date(response.token.expiresAt).getTime(),
+                response.token.refreshToken,
+                {
+                    user: response.user,
+                    account: response.account,
+                }
+            );
+            return this.profile;
         } catch (error: any) {
             throw new AuthError(
                 error.message || "Error al registrar usuario",
@@ -330,13 +336,22 @@ export class AuthService {
         }
     }
 
-    async signIn(email: string, password: string): Promise<void> {
+    async signIn(email: string, password: string): Promise<Profile | null> {
         try {
             const response = await this.api.post<AuthResponse>("/auth/login", {
                 email,
                 password,
             });
-            await this.setSession(response);
+            await this.setSession(
+                response.token.accessToken,
+                new Date(response.token.expiresAt).getTime(),
+                response.token.refreshToken,
+                {
+                    user: response.user,
+                    account: response.account,
+                }
+            );
+            return this.profile;
         } catch (error: any) {
             throw new AuthError(
                 error.message || "Error al iniciar sesión",
@@ -348,64 +363,12 @@ export class AuthService {
 
     async signOut(): Promise<void> {
         try {
-            // Intenta invalidar el token en el servidor
-            if (this.refreshToken) {
-                await this.api.post<void>("/auth/logout", {
-                    refreshToken: this.refreshToken,
-                });
-            }
+            await this.api.post("/auth/logout");
         } catch (error) {
             console.error("Error al cerrar sesión en el servidor:", error);
         } finally {
-            this.clearSession();
-        }
-    }
-
-    async updateProfile(updatedData: Partial<Profile>): Promise<Profile> {
-        if (!this.isAuthenticated() || !this.profile) {
-            throw new AuthError("Usuario no autenticado", "NOT_AUTHENTICATED");
-        }
-
-        try {
-            const response = await this.api.patch<Profile>("/auth/profile");
-            this.profile = response;
-            await AsyncStorage.setItem(
-                this.STORAGE_KEYS.PROFILE,
-                JSON.stringify(this.profile)
-            );
+            await this.clearSession();
             this.notifyAuthStateChanged();
-            return response;
-        } catch (error: any) {
-            throw new AuthError(
-                error.message || "Error al actualizar el perfil",
-                "UPDATE_PROFILE_ERROR",
-                error.status
-            );
-        }
-    }
-
-
-    async newDebtQuick(data: NewDebtPayload): Promise<void> {
-        try {
-            await this.api.post("/quick-debt", data);
-        } catch (error: any) {
-            throw new AuthError(
-                error.message || "Error al crear la deuda",
-                "NEW_DEBT_ERROR",
-                error.status
-            );
-        }
-    }
-
-    async newDebtBetweenUsers(data: NewDebtPayload): Promise<void> {
-        try {
-            await this.api.post("/debt-between-users", data);
-        } catch (error: any) {
-            throw new AuthError(
-                error.message || "Error al crear la deuda entre usuarios",
-                "NEW_DEBT_BETWEEN_USERS_ERROR",
-                error.status
-            );
         }
     }
 }
