@@ -35,6 +35,10 @@ const debtService = {
         return await api.get(`/quick-debt/${id}`);
     },
 
+    verifyPaymentDebtQuick: async (debtId: string) => {
+        return await api.post(`/quick-debt/${debtId}/settle`);
+    },
+
     acceptDebtBetweenUsers: async (debtId: string) => {
         return await api.post(`/debt-between-users/${debtId}/accept-debt`);
     },

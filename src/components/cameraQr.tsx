@@ -23,7 +23,6 @@ export default function CameraQr(props: CameraQrProps) {
     }, [permission]);
 
     const handleRequestPermission = async () => {
-        console.log("Solicitando permiso de cámara...");
         const result = await requestPermission();
 
         if (result.granted) {

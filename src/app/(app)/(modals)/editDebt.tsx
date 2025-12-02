@@ -9,6 +9,7 @@ import { editDebt } from "@/libs/editDebtActions";
 import { resendDebt } from "@/libs/debtActions";
 import DebtModalHeader from "@/components/debts/DebtModalHeader";
 import { useDebtDetails } from "@/hooks/useDebtDetails";
+import { editDebtQuick } from "@/libs/debtActions";
 
 export default function EditDebtScreen() {
     const router = useRouter();
@@ -31,6 +32,7 @@ export default function EditDebtScreen() {
     const handleSave = async () => {
         try {
             await editDebt(id as string, type as string, concept, amount, description, router);
+            router.push(`(modals)/successNotification?title=¡Editada!&message=La deuda ha sido editada`);
         } catch (error) {
             Alert.alert("Error", "No se pudo editar la deuda.");
         }

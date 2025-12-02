@@ -39,7 +39,6 @@ export default function FriendsView() {
                 <FriendList
                     friends={friends}
                     onPress={(friendId) => {
-                        console.log("Pressed friend with ID:", friendId);
                     }}
                     onRemove={(friendId) => {
                         removeFriend(friendId);
