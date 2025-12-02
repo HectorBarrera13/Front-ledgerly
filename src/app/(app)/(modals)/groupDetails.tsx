@@ -1,6 +1,5 @@
-// src/app/(app)/(modals)/groupDetails.tsx
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
 import { useRouter, Stack, useLocalSearchParams } from "expo-router";
 import CardGroupDebt from "@/components/groups/CardGroupDebt";
 import ButtonAdd from "@/components/ButtonAdd";
@@ -12,9 +11,16 @@ import AvatarInitials from "@/components/AvatarInitials";
 export default function GroupDetailsScreen() {
     const router = useRouter();
     const { id: groupId } = useLocalSearchParams<{ id: string }>();
-    const { group, members, debts, loading } = useGroupDetails(groupId ?? "");
+    const { group, members, debts, loading, refreshDebts } = useGroupDetails(groupId ?? "");
+    const [refreshing, setRefreshing] = React.useState(false);
 
-    if (loading) {
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await refreshDebts();
+        setRefreshing(false);
+    };
+
+    if (loading && !refreshing) {
         return (
             <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
                 <ActivityIndicator size="large" color="#6C1ED6" />
@@ -34,7 +40,16 @@ export default function GroupDetailsScreen() {
         <SafeAreaView style={{ flex: 1 }}>
             <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
                 <Stack.Screen options={{ headerShown: false }} />
-                <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+                <ScrollView
+                    contentContainerStyle={{ paddingBottom: 100 }}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            colors={["#6C1ED6"]}
+                        />
+                    }
+                >
                     <View style={styles.headerContent}>
                         <View style={styles.header}>
                             <Text style={styles.headerTitle}>{group.name}</Text>
@@ -67,10 +82,13 @@ export default function GroupDetailsScreen() {
                                 <CardGroupDebt
                                     key={debt.id}
                                     debt={debt}
-                                    onPress={() =>
+                                    onPress={() => 
                                         router.push({
-                                            pathname: "/(modals)/groupDebtDetails",
-                                            params: { groupId, id: debt.id }
+                                            pathname: "/(modals)/debtDetails",
+                                            params: { 
+                                                id: debt.id,
+                                                type: "betweenUsers"
+                                            }
                                         })
                                     }
                                 />
@@ -91,7 +109,6 @@ export default function GroupDetailsScreen() {
         </SafeAreaView>
     );
 }
-
 
 const styles = StyleSheet.create({
     headerContent: {

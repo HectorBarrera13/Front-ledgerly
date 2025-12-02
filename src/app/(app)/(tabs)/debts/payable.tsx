@@ -57,14 +57,16 @@ export default function PayableView() {
             status: debt.status ?? "PAYMENT_CONFIRMATION_REJECTED",
             type: "betweenUsers",
         })),
-        ...debtsQuick.debts.map((debt: any) => ({
-            id: debt.id,
-            title: debt.purpose ?? "",
-            creditor: debt.targetUserName ?? "",
-            amount: debt.amount ?? 0,
-            status: debt.status ?? "PENDING",
-            type: "quick",
-        })),
+        ...debtsQuick.debts
+            .filter((debt: any) => debt.status !== "PAYMENT_CONFIRMED")
+            .map((debt: any) => ({
+                id: debt.id,
+                title: debt.purpose ?? "",
+                creditor: debt.targetUserName ?? "",
+                amount: debt.amount ?? 0,
+                status: debt.status ?? "PENDING",
+                type: "quick",
+            })),
     ];
 
     const loading =
