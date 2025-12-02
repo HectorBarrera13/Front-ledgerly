@@ -1,5 +1,5 @@
 // context/AuthContext.tsx
-import React, { createContext, useEffect, useContext, useReducer } from "react";
+import React, { createContext, useEffect, useContext } from "react";
 import { router, useRootNavigationState, useSegments } from "expo-router";
 import { SplashScreen } from "expo-router";
 import { authService } from "@service/authService";
@@ -19,41 +19,6 @@ interface Props {
     children: React.ReactNode;
 }
 
-type AuthState = {
-    isLoading: boolean;
-    profile: Profile | null;
-    initialCheckDone: boolean;
-};
-
-type AuthAction =
-    | { type: "RESTORE_PROFILE"; profile: Profile | null }
-    | { type: "UPDATE_PROFILE"; profile: Profile | null };
-
-const initialState: AuthState = {
-    isLoading: true,
-    profile: null,
-    initialCheckDone: false,
-};
-
-function authReducer(state: AuthState, action: AuthAction): AuthState {
-    switch (action.type) {
-        case "RESTORE_PROFILE":
-            return {
-                ...state,
-                profile: action.profile,
-                isLoading: false,
-                initialCheckDone: true,
-            };
-        case "UPDATE_PROFILE":
-            return {
-                ...state,
-                profile: action.profile,
-            };
-        default:
-            return state;
-    }
-}
-
 const MOCKED_PROFILE: Profile = {
     account: {
         id: "account_123",
@@ -70,62 +35,55 @@ const MOCKED_PROFILE: Profile = {
 const USE_MOCKED_PROFILE = false;
 
 export default function AuthProvider(props: Props) {
-    const [state, dispatch] = useReducer(authReducer, initialState);
-    const { profile, isLoading, initialCheckDone } = state;
+    const [initialCheckDone, setInitialCheckDone] = React.useState(false);
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [profile, setProfile] = React.useState<Profile | null>(null);
     const segments = useSegments();
     const ready = useRootNavigationState();
 
     useEffect(() => {
-        async function fetchProfile() {
-            try {
-                const currentProfile = USE_MOCKED_PROFILE
-                    ? MOCKED_PROFILE
-                    : await authService.getSession();
-                dispatch({
-                    type: "RESTORE_PROFILE",
-                    profile: currentProfile,
-                });
-            } catch (error) {
-                dispatch({ type: "RESTORE_PROFILE", profile: null });
-            } finally {
-                SplashScreen.hideAsync().catch((err) => {
-                    console.error("Error hiding splash screen:", err);
-                });
+        setIsLoading(true);
+        setInitialCheckDone(false);
+        if (USE_MOCKED_PROFILE) {
+            setProfile(MOCKED_PROFILE);
+            setIsLoading(false);
+            setInitialCheckDone(true);
+            return;
+        }
+        const unsuscribe = authService.onAuthStateChanged((newProfile) => {
+            setProfile(newProfile);
+            setInitialCheckDone(true);
+            setIsLoading(false);
+            if (newProfile) {
+                console.log("User logged in");
+            } else {
+                console.log("User logged out");
             }
-        }
-
-        fetchProfile();
-        if (!USE_MOCKED_PROFILE) {
-            authService.onAuthStateChanged((newProfile) => {
-                dispatch({
-                    type: "UPDATE_PROFILE",
-                    profile: newProfile,
-                });
-            });
-
-            // Cleanup
-            return () => {
-                authService.unsubscribe();
-            };
-        }
+        });
+        return () => unsuscribe();
     }, []);
 
     useEffect(() => {
-        if (!ready) return;
-        if (!initialCheckDone) return;
+        if (!initialCheckDone || !ready) return;
 
-        const isRootRoute = (segments.length as number) === 0;
-        const isAuthRoute = segments[0] === "(auth)";
+        const inAuthGroup = segments[0] === "(auth)";
 
         if (profile) {
-            if (isAuthRoute || isRootRoute) {
-                router.replace("/(tabs)/debts");
+            // Si está autenticado y está en auth o en la raíz, llevarlo a debts
+            if (inAuthGroup || segments.length === (0 as number)) {
+                router.replace("/debts");
             }
         } else {
-            if (!isAuthRoute || isRootRoute) {
+            // Si NO está autenticado y NO está en auth, llevarlo a login
+            if (!inAuthGroup) {
                 router.replace("/login");
             }
         }
+
+        // Ocultar splash screen cuando la navegación inicial esté lista
+        SplashScreen.hideAsync().catch((err) => {
+            console.error("Failed to hide splash screen:", err);
+        });
     }, [initialCheckDone, profile, segments, ready]);
 
     return (
