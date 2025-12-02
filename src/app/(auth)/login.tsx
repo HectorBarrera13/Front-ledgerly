@@ -13,7 +13,6 @@ export default function LoginScreen() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const handleLogin = async () => {
         if (!isNotEmpty(email) || !isNotEmpty(password)) {
@@ -36,15 +35,12 @@ export default function LoginScreen() {
         }
         try {
             setLoading(true);
-            setError(null);
 
             await authService.signIn(email, password);
+            router.replace("/debts");
         } catch (error: any) {
-            setError(
-                error instanceof Error ? error.message : "An error occurred"
-            );
             Alert.alert(
-                "Error",
+                "Inicio de sesión fallido",
                 error instanceof Error ? error.message : "Ocurrió un error"
             );
         } finally {
@@ -57,7 +53,6 @@ export default function LoginScreen() {
             source={require("@asset/img/bg_screen.jpg")}
             style={styles.background}
             resizeMode="cover"
-
         >
             <StatusBar style="light" />
             <View style={styles.header}>
@@ -77,7 +72,10 @@ export default function LoginScreen() {
                     autoCapitalize="none"
                     Icon={EmailIcon}
                     iconPosition="left"
-                    containerStyle={[{ marginBottom: 35 }, styles.inputCentered]}
+                    containerStyle={[
+                        { marginBottom: 35 },
+                        styles.inputCentered,
+                    ]}
                 />
                 <AuthInput
                     placeholder="Contraseña"
@@ -117,8 +115,6 @@ export default function LoginScreen() {
                     style={styles.registerButton}
                     textStyle={styles.registerButtonText}
                 />
-
-            
             </View>
         </ImageBackground>
     );
@@ -198,10 +194,10 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         fontFamily: "InstumentSans-Bold",
     },
-    
+
     inputCentered: {
         alignSelf: "center",
-        width: "100%", 
+        width: "100%",
     },
     divider: {
         height: 1,

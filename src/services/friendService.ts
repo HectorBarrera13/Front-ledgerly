@@ -105,9 +105,15 @@ const friendService = {
 
     loadQr: async (): Promise<string> => {
         try {
-            const response = await api.fetch("/friends/qr", {
+            const response = await api.fetchWithAuth("/friends/qr", {
                 method: "GET",
             });
+            if (!response.ok) {
+                throw new ApiError(
+                    `HTTP error! status: ${response.status}`,
+                    response.status
+                );
+            }
             const arrayBuffer = await response.arrayBuffer();
             const base64String = btoa(
                 String.fromCharCode(...new Uint8Array(arrayBuffer))
@@ -147,7 +153,8 @@ const friendService = {
                 const message = manageApiError(error.status, {
                     default: {
                         title: "Error al buscar amigos",
-                        description: "Ocurrió un error inesperado al buscar amigos.",
+                        description:
+                            "Ocurrió un error inesperado al buscar amigos.",
                     },
                 });
                 throw new PresentableError(message.title, message.description);
