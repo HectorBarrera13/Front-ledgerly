@@ -126,66 +126,68 @@ export class AuthService {
             }
         }
 
-        this.refreshPromise = new Promise<void>(async (resolve, reject) => {
-            try {
-                const refreshToken = await AsyncStorage.getItem(
-                    this.STORAGE_KEYS.REFRESH_TOKEN
-                );
-                if (!refreshToken) {
-                    console.error(
-                        "No refresh token available for token refresh"
+        this.refreshPromise = new Promise<void>((resolve, reject) => {
+            (async () => {
+                try {
+                    const refreshToken = await AsyncStorage.getItem(
+                        this.STORAGE_KEYS.REFRESH_TOKEN
                     );
-                    throw new AuthError(
-                        "No refresh token available",
-                        "NO_REFRESH_TOKEN",
-                        401
-                    );
-                }
-                const response = await this.api.fetch("/auth/refresh", {
-                    headers: {
-                        Authorization: `Bearer ${refreshToken}`,
-                    },
-                    method: "POST",
-                });
+                    if (!refreshToken) {
+                        console.error(
+                            "No refresh token available for token refresh"
+                        );
+                        throw new AuthError(
+                            "No refresh token available",
+                            "NO_REFRESH_TOKEN",
+                            401
+                        );
+                    }
+                    const response = await this.api.fetch("/auth/refresh", {
+                        headers: {
+                            Authorization: `Bearer ${refreshToken}`,
+                        },
+                        method: "POST",
+                    });
 
-                if (!response.ok) {
-                    throw new AuthError(
-                        `Failed to refresh token: ${response.statusText}`,
-                        "REFRESH_FAILED",
-                        response.status
-                    );
-                }
+                    if (!response.ok) {
+                        throw new AuthError(
+                            `Failed to refresh token: ${response.statusText}`,
+                            "REFRESH_FAILED",
+                            response.status
+                        );
+                    }
 
-                const data = await response.json();
-                const tokenData: RefreshResponse = {
-                    accessToken: data.access_token,
-                    expiresAt: data.expires_at,
-                };
+                    const data = await response.json();
+                    const tokenData: RefreshResponse = {
+                        accessToken: data.access_token,
+                        expiresAt: data.expires_at,
+                    };
 
-                await this.setSession(
-                    tokenData.accessToken,
-                    new Date(tokenData.expiresAt).getTime(),
-                    refreshToken
-                );
-                resolve();
-            } catch (error) {
-                console.error("Error during token refresh:", error);
-                const isPermanent =
-                    error instanceof AuthError &&
-                    (error.status === 400 ||
-                        error.status === 401 ||
-                        error.status === 403);
-                if (isPermanent) {
-                    console.error(
-                        "Permanent error during token refresh:",
-                        error
+                    await this.setSession(
+                        tokenData.accessToken,
+                        new Date(tokenData.expiresAt).getTime(),
+                        refreshToken
                     );
-                    await this.clearSession();
+                    resolve();
+                } catch (error) {
+                    console.error("Error during token refresh:", error);
+                    const isPermanent =
+                        error instanceof AuthError &&
+                        (error.status === 400 ||
+                            error.status === 401 ||
+                            error.status === 403);
+                    if (isPermanent) {
+                        console.error(
+                            "Permanent error during token refresh:",
+                            error
+                        );
+                        await this.clearSession();
+                    }
+                    reject(error);
+                } finally {
+                    this.refreshPromise = null;
                 }
-                reject(error);
-            } finally {
-                this.refreshPromise = null;
-            }
+            })();
         });
 
         try {
