@@ -88,7 +88,7 @@ export default function FriendList({
                     tintColor="#7519EB" // iOS
                 />
             }
-            onEndReachedThreshold={0.8}
+            onEndReachedThreshold={0.5}
         />
     );
 }

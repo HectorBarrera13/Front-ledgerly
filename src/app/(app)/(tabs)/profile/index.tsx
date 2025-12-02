@@ -4,7 +4,6 @@ import { authService } from "@service/authService";
 import { Button } from "@/components/Button";
 import { StyleSheet } from "react-native";
 import { router } from "expo-router";
-import friendService from "@/services/friendService";
 
 export default function ProfileView() {
     const { profile } = useAuth();
@@ -13,9 +12,13 @@ export default function ProfileView() {
 
     const onLogout = async () => {
         try {
+            console.log("Logging out user...");
             await authService.signOut();
         } catch (error) {
             console.error("Logout error:", error);
+        } finally {
+            console.log("Navigating to login screen...");
+            router.replace("/(auth)/login");
         }
     };
 

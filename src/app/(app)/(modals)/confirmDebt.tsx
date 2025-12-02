@@ -5,21 +5,31 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import DebtInfo from "@/components/debts/DebtInfo";
 import Input from "@/components/Input";
 import { Button } from "@/components/Button";
-import { authService } from "@/services/authService";
 import DebtModalHeader from "@/components/debts/DebtModalHeader";
 import FriendSuggestionsList from "@/components/debts/FriendSuggestionsList";
 import { useDebtFriendSuggestions } from "@/hooks/useDebtFriendSuggestions";
+import debtService from "@/services/debtService";
 
 export default function ConfirmDebtScreen() {
     const router = useRouter();
-    const { concept = "", amount = "0", description = "" } = useLocalSearchParams();
+    const {
+        concept = "",
+        amount = "0",
+        description = "",
+    } = useLocalSearchParams();
 
     const [myRole, setMyRole] = useState<"CREDITOR" | "DEBTOR">("DEBTOR");
     const [targetName, setTargetName] = useState("");
-    const [selectedFriend, setSelectedFriend] = useState<{ id: string; name: string } | null>(null);
+    const [selectedFriend, setSelectedFriend] = useState<{
+        id: string;
+        name: string;
+    } | null>(null);
     const [loading, setLoading] = useState(false);
 
-    const { friendSuggestions, loadingSuggestions } = useDebtFriendSuggestions(myRole, targetName);
+    const { friendSuggestions, loadingSuggestions } = useDebtFriendSuggestions(
+        myRole,
+        targetName
+    );
 
     const canCreate = targetName.trim().length > 0 && !loading;
 
@@ -27,7 +37,12 @@ export default function ConfirmDebtScreen() {
         setLoading(true);
         const payloadBase = {
             purpose: String(concept),
-            description: typeof description === "string" ? description : (Array.isArray(description) ? description.join(", ") : null),
+            description:
+                typeof description === "string"
+                    ? description
+                    : Array.isArray(description)
+                      ? description.join(", ")
+                      : null,
             currency: "MXN",
             amount: Math.round(parseFloat(String(amount)) * 100),
             myRole: myRole,
@@ -35,12 +50,12 @@ export default function ConfirmDebtScreen() {
 
         try {
             if (selectedFriend) {
-                await authService.newDebtBetweenUsers({
+                await debtService.newDebtBetweenUsers({
                     ...payloadBase,
                     targetUserId: selectedFriend.id,
-                } as any); 
+                } as any);
             } else {
-                await authService.newDebtQuick({
+                await debtService.newDebtQuick({
                     ...payloadBase,
                     targetUserName: targetName,
                 });
@@ -72,7 +87,9 @@ export default function ConfirmDebtScreen() {
                 description={String(description)}
                 amount={parseFloat(String(amount))}
             />
-            <View style={{ flexDirection: "row", marginTop: 8, marginBottom: 8 }}>
+            <View
+                style={{ flexDirection: "row", marginTop: 8, marginBottom: 8 }}
+            >
                 <TouchableOpacity
                     style={[
                         styles.roleBtn,
@@ -80,7 +97,13 @@ export default function ConfirmDebtScreen() {
                     ]}
                     onPress={() => setMyRole("DEBTOR")}
                 >
-                    <Text style={myRole === "DEBTOR" ? styles.roleTextActive : styles.roleText}>
+                    <Text
+                        style={
+                            myRole === "DEBTOR"
+                                ? styles.roleTextActive
+                                : styles.roleText
+                        }
+                    >
                         Soy Deudor
                     </Text>
                 </TouchableOpacity>
@@ -91,7 +114,13 @@ export default function ConfirmDebtScreen() {
                     ]}
                     onPress={() => setMyRole("CREDITOR")}
                 >
-                    <Text style={myRole === "CREDITOR" ? styles.roleTextActive : styles.roleText}>
+                    <Text
+                        style={
+                            myRole === "CREDITOR"
+                                ? styles.roleTextActive
+                                : styles.roleText
+                        }
+                    >
                         Soy Acreedor
                     </Text>
                 </TouchableOpacity>
@@ -103,17 +132,19 @@ export default function ConfirmDebtScreen() {
                 placeholder={`Nombre del ${myRole === "CREDITOR" ? "deudor" : "acreedor"}`}
                 style={styles.input}
             />
-            {myRole === "CREDITOR" && friendSuggestions.length > 0 && !selectedFriend && (
-                <FriendSuggestionsList
-                    suggestions={friendSuggestions}
-                    onSelect={handleSelectFriend}
-                />
-            )}
+            {myRole === "CREDITOR" &&
+                friendSuggestions.length > 0 &&
+                !selectedFriend && (
+                    <FriendSuggestionsList
+                        suggestions={friendSuggestions}
+                        onSelect={handleSelectFriend}
+                    />
+                )}
             <Button
                 title={loading ? "Creando..." : "Crear"}
                 onPress={handleCreate}
                 disabled={!canCreate}
-                style={[styles.button, (!canCreate) && styles.buttonDisabled]}
+                style={[styles.button, !canCreate && styles.buttonDisabled]}
             />
         </SafeAreaView>
     );
@@ -121,7 +152,7 @@ export default function ConfirmDebtScreen() {
 
 export const options = {
     headerShown: false,
-}
+};
 
 const styles = StyleSheet.create({
     container: {

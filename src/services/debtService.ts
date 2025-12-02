@@ -1,5 +1,6 @@
 import api from "@/services/apiClient";
 import { DebtBetweenUsers, QuickDebt } from "@/types/Debt";
+import { NewDebtPayload } from "./authService";
 
 interface DebtsResponse<T> {
     items: T[];
@@ -34,6 +35,10 @@ const debtService = {
         return await api.get(`/quick-debt/${id}`);
     },
 
+    verifyPaymentDebtQuick: async (debtId: string) => {
+        return await api.post(`/quick-debt/${debtId}/settle`);
+    },
+
     acceptDebtBetweenUsers: async (debtId: string) => {
         return await api.post(`/debt-between-users/${debtId}/accept-debt`);
     },
@@ -50,17 +55,28 @@ const debtService = {
     resendDebt: async (debtId: string) => {
         return await api.post(`/debt-between-users/${debtId}/resend-debt`);
     },
-    
+
     rejectDebtPayment: async (debtId: string) => {
         return await api.post(`/debt-between-users/${debtId}/reject-payment`);
-    },  
-    
+    },
+
     editQuickDebt: async (debtId: string, data: Partial<QuickDebt>) => {
         return await api.patch(`/quick-debt/${debtId}`, data);
     },
 
-    editDebtBetweenUsers: async (debtId: string, data: Partial<DebtBetweenUsers>) => {
+    editDebtBetweenUsers: async (
+        debtId: string,
+        data: Partial<DebtBetweenUsers>
+    ) => {
         return await api.patch(`/debt-between-users/${debtId}`, data);
+    },
+
+    async newDebtQuick(data: NewDebtPayload): Promise<void> {
+        return await api.post("/quick-debt", data);
+    },
+
+    async newDebtBetweenUsers(data: NewDebtPayload): Promise<void> {
+        return await api.post("/debt-between-users", data);
     },
 };
 

@@ -20,7 +20,6 @@ export default function SignupScreen() {
     const [password, setPassword] = useState("");
     const [acceptPolicy, setAcceptPolicy] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const handleRegister = async () => {
         if (!acceptPolicy) {
@@ -31,7 +30,6 @@ export default function SignupScreen() {
         }
         try {
             setLoading(true);
-            setError(null);
             await authService.signUp({
                 email,
                 password,
@@ -43,7 +41,6 @@ export default function SignupScreen() {
                 },
             });
         } catch (error: any) {
-            setError(error.message || "Ocurrió un error");
             Alert.alert(
                 error instanceof Error ? error.message : "Ocurrió un error"
             );
