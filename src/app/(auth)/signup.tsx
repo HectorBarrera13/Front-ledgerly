@@ -11,10 +11,12 @@ import { Button } from "@component/Button";
 import { AuthInput } from "@component/AuthInput";
 import { authService } from "@service/authService";
 
+const countryCodeDefault = "+52"; 
+
 export default function SignupScreen() {
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
-    const [countryCode, setCountryCode] = useState("");
+    const [countryCode] = useState(countryCodeDefault); 
     const [phoneNumber, setPhoneNumber] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -52,48 +54,49 @@ export default function SignupScreen() {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Crear cuenta</Text>
+            <View style={styles.inputContainer}>
+                <AuthInput
+                    placeholder="Nombre"
+                    value={firstName}
+                    onChangeText={setFirstName}
+                    containerStyle={styles.input}
+                />
+                <AuthInput
+                    placeholder="Apellido"
+                    value={lastName}
+                    onChangeText={setLastName}
+                    containerStyle={styles.input}
+                />
+                <AuthInput
+                    placeholder="Código de país"
+                    value={countryCode}
+                    editable={false}
+                    onChangeText={() => {}}
+                    containerStyle={[styles.input, { backgroundColor: "#F0F0F0" }]}
+                />
+                <AuthInput
+                    placeholder="Teléfono"
+                    value={phoneNumber}
+                    onChangeText={setPhoneNumber}
+                    keyboardType="phone-pad"
+                    containerStyle={styles.input}
+                />
+                <AuthInput
+                    placeholder="Correo"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    containerStyle={styles.input}
+                />
+                <AuthInput
+                    placeholder="Contraseña"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    containerStyle={styles.input}
+                />
+            </View>
 
-            <AuthInput
-                placeholder="Nombre"
-                value={firstName}
-                onChangeText={setFirstName}
-                containerStyle={styles.input}
-            />
-            <AuthInput
-                placeholder="Apellido"
-                value={lastName}
-                onChangeText={setLastName}
-                containerStyle={styles.input}
-            />
-            <AuthInput
-                placeholder="Código de país"
-                value={countryCode}
-                onChangeText={setCountryCode}
-                containerStyle={styles.input}
-            />
-            <AuthInput
-                placeholder="Teléfono"
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
-                keyboardType="phone-pad"
-                containerStyle={styles.input}
-            />
-            <AuthInput
-                placeholder="Correo"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                containerStyle={styles.input}
-            />
-            <AuthInput
-                placeholder="Contraseña"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                containerStyle={styles.input}
-            />
-
-            {/* Checkbox de políticas */}
             <View style={styles.policyRow}>
                 <TouchableOpacity
                     style={styles.checkbox}
@@ -171,6 +174,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#fff",
         paddingLeft: 8,
         paddingRight: 8,
+        width: "98%",
     },
     policyRow: {
         flexDirection: "row",
@@ -223,5 +227,9 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontWeight: "bold",
         fontSize: 18,
+    },
+    inputContainer: {
+        justifyContent: "center",
+        alignItems: "center",
     },
 });

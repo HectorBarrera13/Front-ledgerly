@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, Pressable } from "react-native";
 import { useRouter, Stack, useLocalSearchParams } from "expo-router";
 import CardGroupDebt from "@/components/groups/CardGroupDebt";
 import ButtonAdd from "@/components/ButtonAdd";
@@ -11,22 +11,66 @@ import AvatarInitials from "@/components/AvatarInitials";
 export default function GroupDetailsScreen() {
     const router = useRouter();
     const { id: groupId } = useLocalSearchParams<{ id: string }>();
-    const { group, members, debts, loading, refreshDebts } = useGroupDetails(groupId ?? "");
-    const [refreshing, setRefreshing] = React.useState(false);
+    const [role, setRole] = useState<"CREDITOR" | "DEBTOR">("DEBTOR");
+
+    const debtsPending = useGroupDetails(groupId ?? "", role, "PENDING");
+    const debtsAccepted = useGroupDetails(groupId ?? "", role, "ACCEPTED");
+    const debtsRejected = useGroupDetails(groupId ?? "", role, "REJECTED");
+    const debtsPaymentPending = useGroupDetails(groupId ?? "", role, "PAYMENT_CONFIRMATION_PENDING");
+    const debtsPaymentRejected = useGroupDetails(groupId ?? "", role, "PAYMENT_CONFIRMATION_REJECTED");
+
+    const mappedDebts = [
+        ...(
+            role === "DEBTOR"
+                ? debtsPending.debts.filter((debt: any) => debt.status !== "PENDING")
+                : debtsPending.debts
+        ).map((debt: any) => ({
+            ...debt,
+            status: debt.status ?? "PENDING",
+        })),
+        ...debtsAccepted.debts.map((debt: any) => ({
+            ...debt,
+            status: debt.status ?? "ACCEPTED",
+        })),
+        ...debtsRejected.debts.map((debt: any) => ({
+            ...debt,
+            status: debt.status ?? "REJECTED",
+        })),
+        ...debtsPaymentPending.debts.map((debt: any) => ({
+            ...debt,
+            status: debt.status ?? "PAYMENT_CONFIRMATION_PENDING",
+        })),
+        ...debtsPaymentRejected.debts.map((debt: any) => ({
+            ...debt,
+            status: debt.status ?? "PAYMENT_CONFIRMATION_REJECTED",
+        })),
+    ];
+
+    const loading =
+        debtsPending.loading ||
+        debtsAccepted.loading ||
+        debtsRejected.loading ||
+        debtsPaymentPending.loading ||
+        debtsPaymentRejected.loading;
+
+    const group = debtsPending.group || debtsAccepted.group || debtsRejected.group || debtsPaymentPending.group || debtsPaymentRejected.group;
+    const members = debtsPending.members || [];
+
+    const refresh = () => {
+        debtsPending.refreshDebts();
+        debtsAccepted.refreshDebts();
+        debtsRejected.refreshDebts();
+        debtsPaymentPending.refreshDebts();
+        debtsPaymentRejected.refreshDebts();
+    };
+
+    const [refreshing, setRefreshing] = useState(false);
 
     const onRefresh = async () => {
         setRefreshing(true);
-        await refreshDebts();
+        await refresh();
         setRefreshing(false);
     };
-
-    if (loading && !refreshing) {
-        return (
-            <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                <ActivityIndicator size="large" color="#6C1ED6" />
-            </SafeAreaView>
-        );
-    }
 
     if (!group) {
         return (
@@ -76,23 +120,62 @@ export default function GroupDetailsScreen() {
 
                         <View style={styles.separator} />
 
-                        {debts
-                            .filter((debt) => debt.status !== "PAYMENT_CONFIRMED")
-                            .map((debt) => (
+                        <View style={styles.roleButtonsRow}>
+                            <Pressable
+                                style={[
+                                    styles.roleButton,
+                                    role === "DEBTOR" && styles.roleButtonActive,
+                                ]}
+                                onPress={() => setRole("DEBTOR")}
+                            >
+                                <Text
+                                    style={[
+                                        styles.roleButtonText,
+                                        role === "DEBTOR" && styles.roleButtonTextActive,
+                                    ]}
+                                >
+                                    Por pagar
+                                </Text>
+                            </Pressable>
+                            <Pressable
+                                style={[
+                                    styles.roleButton,
+                                    role === "CREDITOR" && styles.roleButtonActive,
+                                ]}
+                                onPress={() => setRole("CREDITOR")}
+                            >
+                                <Text
+                                    style={[
+                                        styles.roleButtonText,
+                                        role === "CREDITOR" && styles.roleButtonTextActive,
+                                    ]}
+                                >
+                                    Por cobrar
+                                </Text>
+                            </Pressable>
+                        </View>
+
+                        {loading && !refreshing ? (
+                            <ActivityIndicator size="large" color="#6C1ED6" style={{ marginTop: 24 }} />
+                        ) : mappedDebts.length === 0 ? (
+                            <Text style={styles.emptyText}>No hay deudas para este filtro.</Text>
+                        ) : (
+                            mappedDebts.map((debt) => (
                                 <CardGroupDebt
                                     key={debt.id}
                                     debt={debt}
-                                    onPress={() => 
+                                    onPress={() =>
                                         router.push({
                                             pathname: "/(modals)/debtDetails",
-                                            params: { 
+                                            params: {
                                                 id: debt.id,
                                                 type: "betweenUsers"
                                             }
                                         })
                                     }
                                 />
-                            ))}
+                            ))
+                        )}
                     </View>
                 </ScrollView>
                 <View style={styles.addBtnContainer}>
@@ -199,27 +282,39 @@ const styles = StyleSheet.create({
         marginBottom: 24,
         marginTop: 4,
     },
-    fab: {
-        position: "absolute",
-        right: 20,
-        bottom: 30,
-        width: 62,
-        height: 62,
-        borderRadius: 31,
-        backgroundColor: "#A6A6A6",
+    roleButtonsRow: {
+        flexDirection: "row",
         justifyContent: "center",
         alignItems: "center",
-        elevation: 5,
+        marginBottom: 24,
+        gap: 12,
     },
-    fabText: {
-        color: "#fff",
-        fontSize: 36,
+    roleButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 24,
+        borderRadius: 20,
+        backgroundColor: "#e0e0e0",
+        marginHorizontal: 6,
+    },
+    roleButtonActive: {
+        backgroundColor: "#6C1ED6",
+    },
+    roleButtonText: {
+        color: "#6C1ED6",
         fontWeight: "700",
-        marginTop: -2,
+        fontSize: 16,
+    },
+    roleButtonTextActive: {
+        color: "#fff",
     },
     addBtnContainer: {
         position: "absolute",
         bottom: 24,
         right: 24,
+    },
+    emptyText: {
+        textAlign: "center",
+        color: "#888",
+        marginTop: 32,
     },
 });

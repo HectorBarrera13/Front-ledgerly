@@ -10,6 +10,7 @@ export interface Group {
     name: string;
     description: string;
     createdAt: string;
+    creatorId?: string;
     members?: GroupMember[];
 }
 

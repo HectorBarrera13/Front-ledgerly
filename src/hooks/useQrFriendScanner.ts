@@ -9,7 +9,7 @@ export function useQrFriendScanner() {
     const [scanError, setScanError] = useState<PresentableError | null>(null);
 
     const startScanning = async (result: BarcodeScanningResult) => {
-        if (scanning || scanned) return; // Prevent multiple scans
+        if (scanning || scanned) return; 
         setScanned(false);
         setScanning(true);
         if (result?.data) {
