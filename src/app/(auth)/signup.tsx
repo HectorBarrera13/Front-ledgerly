@@ -87,6 +87,7 @@ export default function SignupScreen() {
                     onChangeText={setEmail}
                     keyboardType="email-address"
                     containerStyle={styles.input}
+                    autoCapitalize="none"
                 />
                 <AuthInput
                     placeholder="Contraseña"
