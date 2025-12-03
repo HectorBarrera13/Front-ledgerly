@@ -2,15 +2,33 @@ import React from "react";
 import { Pressable, View, Text, StyleSheet, StyleProp, ViewStyle } from "react-native";
 import AvatarInitials from "@/components/AvatarInitials";
 import { Group, GroupMember } from "@/types/Group";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useAuth } from "@/providers/AuthContext";
 
 interface Props {
   readonly group: Group;
   readonly onPress?: (id: string) => void;
   readonly style?: StyleProp<ViewStyle>;
+  readonly role?: "CREDITOR" | "DEBTOR";
 }
 
-export default function GroupCard({ group, onPress, style }: Props) {
+export default function GroupCard({ group, onPress, style, role }: Props) {
   const members: GroupMember[] = group.members ?? [];
+  const router = useRouter();
+  const { profile } = useAuth();
+  const currentUserId = profile?.user?.id;
+
+  const isCreator = currentUserId === group.creatorId;
+  const canAddMembers = isCreator && role === "CREDITOR";
+
+  const handleAddMember = (e: any) => {
+    e.stopPropagation?.();
+    router.push({
+      pathname: "/(modals)/addNewMembersGroup",
+      params: { groupId: group.groupId }
+    });
+  };
 
   return (
     <Pressable onPress={() => onPress?.(group.groupId)} style={[styles.card, style]}>
@@ -25,14 +43,24 @@ export default function GroupCard({ group, onPress, style }: Props) {
 
       <View style={styles.membersRow}>
         {members.slice(0, 6).map((mapMembers) => (
-        <AvatarInitials
+          <AvatarInitials
             key={mapMembers.id}
             firstName={mapMembers.firstName}
             lastName={mapMembers.lastName}
             size={35}
             style={{ marginRight: 10 }}
-        />
+          />
         ))}
+        <Pressable
+          onPress={handleAddMember}
+          style={[
+            styles.addMemberButton,
+            !canAddMembers && { opacity: 0.5 }
+          ]}
+          disabled={!canAddMembers}
+        >
+          <Ionicons name="person-add" size={22} color="#fff" />
+        </Pressable>
       </View>
     </Pressable>
   );
@@ -78,5 +106,14 @@ const styles = StyleSheet.create({
   membersRow: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  addMemberButton: {
+    width: 35,
+    height: 35,
+    borderRadius: 17.5,
+    backgroundColor: "#B5B5B5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 4,
   },
 });

@@ -1,20 +1,14 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import StatusIcon from "@asset/icon/icon_status.svg";
-import { DebtStatusText } from "@/types/Debt";
-
-export interface GroupDebt {
-    id: string;
-    purpose: string;
-    description: string;
-    amount: number;
-    currency: string;
-    status: keyof typeof DebtStatusText;
-}
+import { DebtStatusText, DebtBetweenUsers } from "@/types/Debt";
+import AvatarInitials from "@/components/AvatarInitials";
+import { useAuth } from "@/providers/AuthContext";
 
 interface CardGroupDebtProps {
-    debt: GroupDebt;
+    debt: DebtBetweenUsers;
     onPress?: (id: string) => void;
+    onSettle?: (id: string) => void;
 }
 
 const formatAmount = (amount: number) => {
@@ -34,7 +28,13 @@ const formatTitle = (purpose?: string) => {
     return value.length > 14 ? value.slice(0, 13) + "..." : value;
 };
 
-const CardGroupDebt: React.FC<CardGroupDebtProps> = ({ debt, onPress }) => {
+const CardGroupDebt: React.FC<CardGroupDebtProps> = ({ debt, onPress, onSettle }) => {
+    const { profile } = useAuth();
+    const currentUserId = profile?.user?.id;
+    const isDebtor = currentUserId === debt.debtorSummary.userId;
+    const showUser = isDebtor ? debt.creditorSummary : debt.debtorSummary;
+    const userName = `${showUser.firstName} ${showUser.lastName}`;
+
     return (
         <TouchableOpacity
             style={styles.card}
@@ -46,17 +46,28 @@ const CardGroupDebt: React.FC<CardGroupDebtProps> = ({ debt, onPress }) => {
                     <Text style={styles.title}>
                         {formatTitle(debt.purpose)}
                     </Text>
-                    <Text style={styles.creditor}>{debt.description}</Text>
+                    <Text style={styles.creditor}>{userName}</Text>
                 </View>
                 <Text style={styles.amount}>
                     {formatAmount(debt.amount ?? 0)}
                 </Text>
             </View>
-            <View style={styles.settleBtn}>
+            <TouchableOpacity
+                style={styles.settleBtn}
+                onPress={() => onSettle?.(debt.id)}
+                activeOpacity={0.8}
+            >
                 <StatusIcon width={22} height={22} style={styles.checkIcon} />
                 <Text style={styles.settleText}>
-                    {DebtStatusText[debt.status]}
+                    {DebtStatusText[debt.status] ?? "Desconocido"}
                 </Text>
+            </TouchableOpacity>
+            <View style={styles.avatarContainer}>
+                <AvatarInitials
+                    firstName={showUser.firstName}
+                    lastName={showUser.lastName}
+                    size={32}
+                />
             </View>
         </TouchableOpacity>
     );
@@ -115,6 +126,11 @@ const styles = StyleSheet.create({
         color: "#6C1AEF",
         fontWeight: "bold",
         fontSize: 17,
+    },
+    avatarContainer: {
+        position: "absolute",
+        bottom: 12,
+        right: 12,
     },
 });
 
