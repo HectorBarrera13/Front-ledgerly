@@ -23,8 +23,8 @@ const formatAmount = (amount: number) => {
     });
 };
 
-const formatTitle = (purpose?: string) => {
-    const value = purpose ?? "Sin título";
+const formatTitle = (purpose: string = "Sin título") => {
+    const value = purpose;
     return value.length > 14 ? value.slice(0, 13) + "..." : value;
 };
 

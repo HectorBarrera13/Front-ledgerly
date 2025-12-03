@@ -52,6 +52,7 @@ export default function AddGroupMemberScreen() {
             router.back();
         } catch (error) {
             Alert.alert("Error", "No se pudo añadir el/los integrante(s).");
+            return;
         } finally {
             setAdding(false);
         }
