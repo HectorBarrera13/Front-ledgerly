@@ -4,7 +4,6 @@ import ButtonAdd from "@/components/ButtonAdd";
 import { useRouter } from "expo-router";
 import { useDebts } from "@/hooks/useDebts";
 import CardDebt from "@/components/debts/debtCard";
-import { DebtStatusText } from "@type/Debt";
 
 export default function ReceivableView() {
     const router = useRouter();
