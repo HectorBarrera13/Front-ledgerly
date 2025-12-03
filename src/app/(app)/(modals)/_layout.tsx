@@ -61,6 +61,14 @@ export default function ModalsLayout() {
                     title: "Detalles del Grupo",
                 }}
             />
+            <Stack.Screen
+                name="generateQr"
+                options={{
+                    headerTitleAlign: "center",
+                    headerShown: true,
+                    title: "Código QR",
+                }}
+            />
         </Stack>
     );
 }

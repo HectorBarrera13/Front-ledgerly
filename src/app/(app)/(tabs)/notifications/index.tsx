@@ -43,7 +43,7 @@ export default function NotificationsView() {
                                 onAccept={handleAccept}
                                 onReject={handleReject}
                                 onPress={(id) =>
-                                    router.push(`(modals)/debtDetails?id=${id}&mode=payable&type=betweenUsers`)
+                                router.push(`(modals)/debtDetails?id=${id}&mode=payable&type=betweenUsers&fromNotifications=true`)
                                 }
                             />
                         );

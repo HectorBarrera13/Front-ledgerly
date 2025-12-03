@@ -24,11 +24,12 @@ export default function GroupsView() {
                 data={sortedGroups}
                 keyExtractor={(item, idx) => item.groupId ?? String(idx)}
                 renderItem={({ item }) => (
-                    <GroupCard
-                        group={item}
-                        onPress={handleDetails}
-                        style={{ marginBottom: 16 }}
-                    />
+                <GroupCard
+                    group={item}
+                    onPress={handleDetails}
+                    style={{ marginBottom: 16 }}
+                    role="CREDITOR" 
+                />
                 )}
                 contentContainerStyle={{ paddingBottom: 80 }}
                 refreshControl={

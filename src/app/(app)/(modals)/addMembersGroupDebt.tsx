@@ -99,7 +99,6 @@ export default function AddMembersGroupDebt() {
         setSelected((prev) => prev.filter((x) => x !== id));
     };
 
-    // Calcular el total dinámico
     const [dynamicAmounts, setDynamicAmounts] = useState(0);
     useEffect(() => {
         const totalAmount = Object.values(amountsPer).map((v) => Number.parseFloat(v) || 0).reduce((a, b) => a + b, 0);

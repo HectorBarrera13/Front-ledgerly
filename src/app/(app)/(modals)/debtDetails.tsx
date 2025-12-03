@@ -18,11 +18,13 @@ import {
 } from "@/libs/debtActions";
 
 export default function DebtDetailScreen() {
-    const { id, type } = useLocalSearchParams();
+    const { id, type, fromNotifications } = useLocalSearchParams();
     const { debt, setDebt, loading } = useDebtDetails(id as string, type as string);
     const router = useRouter();
     const { profile } = useAuth();
     const currentUserId = profile?.user?.id;
+
+    const hideActions = fromNotifications === "true";
 
     if (loading) {
         return (
@@ -55,7 +57,6 @@ export default function DebtDetailScreen() {
     const isRejectedPayable = type === "betweenUsers" && mode === "payable" && debt.status === "PAYMENT_CONFIRMATION_REJECTED";
     const isResendable = type === "betweenUsers" && (debt.status === "REJECTED");
     const isDeletable = (debt.status === "PENDING" || debt.status === "REJECTED");
-
 
     const isBetween = debt.debtorSummary && debt.creditorSummary;
     const concept = debt.purpose;
@@ -104,91 +105,95 @@ export default function DebtDetailScreen() {
 
                 <View style={{ height: 12 }} />
 
-                {isAcceptedPayable && (
-                    <Button
-                        title="Marcar como pagada"
-                        onPress={() => reportPayment(debt, setDebt, router)}
-                        style={styles.payButton}
-                    />
-                )}
+                {!hideActions && (
+                    <>
+                        {isAcceptedPayable && (
+                            <Button
+                                title="Marcar como pagada"
+                                onPress={() => reportPayment(debt, setDebt, router)}
+                                style={styles.payButton}
+                            />
+                        )}
 
-                {isPendingConfirmationReceivable && (
-                    <View>
-                        <Button
-                            title="Confirmar pago"
-                            onPress={() => verifyPayment(debt, setDebt, router)}
-                            style={styles.payButton}
-                        />
-                        <Button
-                            title="Rechazar pago"
-                            onPress={() => rejectPayment(debt, setDebt, router)}
-                            style={[styles.payButton, { backgroundColor: "#f8653c", marginTop: 8 }]}
-                        />
-                    </View>
-                )}
+                        {isPendingConfirmationReceivable && (
+                            <View>
+                                <Button
+                                    title="Confirmar pago"
+                                    onPress={() => verifyPayment(debt, setDebt, router)}
+                                    style={styles.payButton}
+                                />
+                                <Button
+                                    title="Rechazar pago"
+                                    onPress={() => rejectPayment(debt, setDebt, router)}
+                                    style={[styles.payButton, { backgroundColor: "#f8653c", marginTop: 8 }]}
+                                />
+                            </View>
+                        )}
 
-                {isEditable && (
-                    <Button
-                        title="Editar deuda"
-                        onPress={() => {
-                            if (!debt.id) {
-                                console.log("ERROR: debt.id is undefined", debt);
-                                return;
-                            }
-                            router.push({
-                                pathname: "editDebt",
-                                params: { id: debt.id, type, mode }
-                            });
-                        }}
-                        style={[styles.payButton, { backgroundColor: "#555" }]}
-                    />
-                )}
+                        {isEditable && (
+                            <Button
+                                title="Editar deuda"
+                                onPress={() => {
+                                    if (!debt.id) {
+                                        console.log("ERROR: debt.id is undefined", debt);
+                                        return;
+                                    }
+                                    router.push({
+                                        pathname: "editDebt",
+                                        params: { id: debt.id, type, mode }
+                                    });
+                                }}
+                                style={[styles.payButton, { backgroundColor: "#555" }]}
+                            />
+                        )}
 
-                {isQuickEditable && (
-                    <Button
-                        title="Editar deuda"
-                        onPress={() => {
-                            router.push({
-                                pathname: "editDebt",
-                                params: { id: debt.id, type, mode }
-                            });
-                        }}
-                        style={[styles.payButton, { backgroundColor: "#555" }]}
-                    />
-                )}
-                {isQuickPending && (
-                    <Button
-                        title={mode === "receivable" ? "Marcar como saldada" : "Marcar como pagada"}
-                        onPress={() => quickConfirm(debt, setDebt, router)}
-                        style={styles.payButton}
-                    />
-                )}
-                {isRejectedPayable && (
-                    <Button
-                        title={mode === "payable" ? "Marcar como saldada" : "Marcar como pagada"}
-                        onPress={() => reportPayment(debt, setDebt, router)}
-                        style={styles.payButton}
-                    />
-                )}
-                {isResendable && (
-                    <Button
-                        title="Reenviar deuda"
-                        onPress={() => resendDebt(debt, setDebt, router)}
-                        style={styles.payButton}
-                    />
-                )}
-                {isDeletable && (
-                    <Button
-                        title="Eliminar deuda"
-                        onPress={() => {
-                            if (type === "quick") {
-                                deleteDebtQuick(debt, setDebt, router);
-                            } else {
-                                verifyPayment(debt, setDebt, router);
-                            }
-                        }}
-                        style={styles.deleteButton}
-                    />
+                        {isQuickEditable && (
+                            <Button
+                                title="Editar deuda"
+                                onPress={() => {
+                                    router.push({
+                                        pathname: "editDebt",
+                                        params: { id: debt.id, type, mode }
+                                    });
+                                }}
+                                style={[styles.payButton, { backgroundColor: "#555" }]}
+                            />
+                        )}
+                        {isQuickPending && (
+                            <Button
+                                title={mode === "receivable" ? "Marcar como saldada" : "Marcar como pagada"}
+                                onPress={() => quickConfirm(debt, setDebt, router)}
+                                style={styles.payButton}
+                            />
+                        )}
+                        {isRejectedPayable && (
+                            <Button
+                                title={mode === "payable" ? "Marcar como saldada" : "Marcar como pagada"}
+                                onPress={() => reportPayment(debt, setDebt, router)}
+                                style={styles.payButton}
+                            />
+                        )}
+                        {isResendable && (
+                            <Button
+                                title="Reenviar deuda"
+                                onPress={() => resendDebt(debt, setDebt, router)}
+                                style={styles.payButton}
+                            />
+                        )}
+                        {isDeletable && (
+                            <Button
+                                title="Eliminar deuda"
+                                onPress={() => {
+                                    if (type === "quick") {
+                                        deleteDebtQuick(debt, setDebt, router);
+                                    } else {
+                                        verifyPayment(debt, setDebt, router);
+                                    }
+                                }}
+                                style={styles.deleteButton}
+                            />
+                        )}
+                    </>
                 )}
             </ScrollView>
         </SafeAreaView>
