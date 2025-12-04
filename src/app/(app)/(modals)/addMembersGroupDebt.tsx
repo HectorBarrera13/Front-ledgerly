@@ -15,7 +15,6 @@ export default function AddMembersGroupDebt() {
 	const { profile } = useAuth(); 
     const currentUserId = profile?.user.id; 
 
-
     const groupId = Array.isArray(params.groupId) ? params.groupId[0] : params.groupId ?? "";
     const concept = Array.isArray(params.concept) ? params.concept[0] : params.concept ?? "";
     const description = Array.isArray(params.description) ? params.description[0] : params.description ?? "";

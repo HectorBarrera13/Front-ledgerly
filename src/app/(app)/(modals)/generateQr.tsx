@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useQrFriendGenerator } from "@/hooks/useQrFriendGenerator";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
+
 export default function GenerateQRView() {
     const {
         generateQrCode,
