@@ -1,14 +1,19 @@
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, Image, TouchableOpacity, RefreshControl } from "react-native";
 import { useAuth } from "@provider/AuthContext";
 import { authService } from "@service/authService";
 import { Button } from "@/components/Button";
 import { StyleSheet } from "react-native";
 import { router } from "expo-router";
+import React, { useState } from "react";
+import useProfilePicture from "@/hooks/useProfilePicture";
 
 export default function ProfileView() {
     const { profile } = useAuth();
     const user = profile?.user;
     const email = profile?.account.email;
+    const { profilePicUrl, loading, reloadProfilePicture } = useProfilePicture();
+
+    const [refreshing, setRefreshing] = useState(false);
 
     const onLogout = async () => {
         try {
@@ -28,11 +33,37 @@ export default function ProfileView() {
         return `${first}${last}`.toUpperCase();
     };
 
+    const onRefresh = async () => {
+        setRefreshing(true);
+        if (reloadProfilePicture) {
+            await reloadProfilePicture();
+        }
+        setRefreshing(false);
+    };
+
     return (
-        <ScrollView style={styles.container}>
+        <ScrollView
+            style={styles.container}
+            refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+        >
             <View style={styles.header}>
                 <View style={styles.avatarContainer}>
-                    <Text style={styles.avatarText}>{getInitials()}</Text>
+                    {profilePicUrl ? (
+                        <Image
+                            source={{ uri: profilePicUrl }}
+                            style={{ width: 100, height: 100, borderRadius: 50 }}
+                        />
+                    ) : (
+                        <Text style={styles.avatarText}>{getInitials()}</Text>
+                    )}
+                    <TouchableOpacity
+                        style={styles.addButton}
+                        onPress={() => router.push("/(app)/(modals)/addProfilePicture")}
+                    >
+                        <Text style={styles.addButtonText}>+</Text>
+                    </TouchableOpacity>
                 </View>
                 <Text style={styles.userName}>
                     {user?.firstName} {user?.lastName}
@@ -106,11 +137,32 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 8,
         elevation: 8,
+        position: "relative",
     },
     avatarText: {
         fontSize: 36,
         fontWeight: "700",
         color: "#7519EB",
+    },
+    addButton: {
+        position: "absolute",
+        right: -10,
+        bottom: -10,
+        backgroundColor: "#7519EB",
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: "center",
+        alignItems: "center",
+        borderWidth: 2,
+        borderColor: "#fff",
+        elevation: 4,
+    },
+    addButtonText: {
+        color: "#fff",
+        fontSize: 24,
+        fontWeight: "bold",
+        marginTop: -2,
     },
     userName: {
         fontSize: 26,
