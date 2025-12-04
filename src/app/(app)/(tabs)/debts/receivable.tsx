@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, RefreshControl, FlatList, Text, TouchableOpacity } from "react-native";
+import { View, StyleSheet, RefreshControl, FlatList, Text, TouchableOpacity, Image } from "react-native";
 import ButtonAdd from "@/components/ButtonAdd";
 import { useRouter } from "expo-router";
 import { useDebts } from "@/hooks/useDebts";
@@ -275,6 +275,17 @@ export default function ReceivableView() {
         }
     };
 
+    const EmptyComponent = () => (
+        <View style={styles.emptyContainer}>
+            <Image 
+                source={require("@asset/img/icon-no-debts.png")} 
+                style={styles.emptyImage}
+                resizeMode="contain"
+            />
+            <Text style={styles.emptyText}>¡No hay deudas registradas!</Text>
+        </View>
+    );
+
     return (
         <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
             <TouchableOpacity 
@@ -298,9 +309,7 @@ export default function ReceivableView() {
                 refreshControl={
                     <RefreshControl refreshing={loading} onRefresh={refresh} />
                 }
-                ListEmptyComponent={
-                    <Text style={styles.emptyText}>No tienes deudas por cobrar.</Text>
-                }
+                ListEmptyComponent={<EmptyComponent />}
             />
             <View style={styles.addBtnContainer}>
                 <ButtonAdd onPress={handleAddPress} disabled={isNavigating} />
@@ -313,6 +322,7 @@ const styles = StyleSheet.create({
     container: {
         padding: 16,
         paddingTop: 24,
+        flexGrow: 1,
     },
     addBtnContainer: {
         position: "absolute",
@@ -320,10 +330,23 @@ const styles = StyleSheet.create({
         paddingRight: 24,
         alignSelf: "flex-end",
     },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingVertical: 60,
+    },
+    emptyImage: {
+        width: 300,
+        height: 300,
+        marginBottom: -30,
+        opacity: 0.6,
+    },
     emptyText: {
         textAlign: "center",
-        color: "#888",
-        marginTop: 32,
+        color: "#999",
+        fontSize: 16,
+        fontWeight: "500",
     },
     printButton: {
         position: "absolute",
