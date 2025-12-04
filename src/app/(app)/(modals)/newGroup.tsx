@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, FlatList, Alert, ActivityIndicator } from "react-native";
+import { View, Text, TextInput, Pressable, StyleSheet, FlatList, Alert, ActivityIndicator, Image } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import CloseButton from "@/components/CloseButton";
 import { Button } from "@/components/Button";
 import { createGroup } from "@/services/groupService";
 import friendService from "@/services/friendService";
 import { Friend } from "@/types/Friends";
+import AvatarInitials from "@/components/AvatarInitials";
 
 export default function NewGroupScreen() {
     const router = useRouter();
 
     const [groupName, setGroupName] = useState("");
     const [description, setDescription] = useState("");
-    const [members, setMembers] = useState<{ id: string; name: string }[]>([]);
+    const [members, setMembers] = useState<{ id: string; name: string; firstName: string; lastName: string; picture?: string }[]>([]);
     const [memberName, setMemberName] = useState("");
     const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -35,7 +36,13 @@ export default function NewGroupScreen() {
 
     const addMember = (friend: Friend) => {
         if (!members.some(m => m.id === friend.id)) {
-            setMembers([...members, { id: friend.id, name: `${friend.firstName} ${friend.lastName}` }]);
+            setMembers([...members, { 
+                id: friend.id, 
+                name: `${friend.firstName} ${friend.lastName}`,
+                firstName: friend.firstName,
+                lastName: friend.lastName,
+                picture: friend.picture
+            }]);
         }
         setMemberName("");
         setShowSuggestions(false);
@@ -44,7 +51,7 @@ export default function NewGroupScreen() {
     const handleCreateGroup = async () => {
         try {
             const memberIds = members.map(m => m.id);
-			console.log("Creating group with:", groupName, description, memberIds);
+            console.log("Creating group with:", groupName, description, memberIds);
             await createGroup(groupName, description, memberIds);
             router.back();
         } catch (error) {
@@ -126,11 +133,18 @@ export default function NewGroupScreen() {
                 contentContainerStyle={{ paddingVertical: 10 }}
                 renderItem={({ item }) => (
                     <View style={styles.memberRow}>
-                        <View style={styles.avatarContainer}>
-                            <Text style={styles.avatarText}>
-                                {item.name.split(" ").map(n => n[0]).join("").toUpperCase()}
-                            </Text>
-                        </View>
+                        {item.picture ? (
+                            <Image
+                                source={{ uri: item.picture }}
+                                style={styles.profileImage}
+                            />
+                        ) : (
+                            <AvatarInitials
+                                firstName={item.firstName}
+                                lastName={item.lastName}
+                                size={40}
+                            />
+                        )}
                         <Text style={styles.memberName}>{item.name}</Text>
                     </View>
                 )}
@@ -239,6 +253,13 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         marginBottom: 12,
+    },
+    profileImage: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "#f0f0f0",
+        marginRight: 12,
     },
     avatarContainer: {
         width: 40,

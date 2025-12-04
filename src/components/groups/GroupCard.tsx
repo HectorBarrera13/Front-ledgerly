@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, View, Text, StyleSheet, StyleProp, ViewStyle } from "react-native";
+import { Pressable, View, Text, StyleSheet, StyleProp, ViewStyle, Image } from "react-native";
 import AvatarInitials from "@/components/AvatarInitials";
 import { Group, GroupMember } from "@/types/Group";
 import { Ionicons } from "@expo/vector-icons";
@@ -43,13 +43,20 @@ export default function GroupCard({ group, onPress, style, role }: Props) {
 
       <View style={styles.membersRow}>
         {members.slice(0, 6).map((mapMembers) => (
-          <AvatarInitials
-            key={mapMembers.id}
-            firstName={mapMembers.firstName}
-            lastName={mapMembers.lastName}
-            size={35}
-            style={{ marginRight: 10 }}
-          />
+          <View key={mapMembers.id} style={styles.memberAvatar}>
+            {mapMembers.picture ? (
+              <Image
+                source={{ uri: mapMembers.picture }}
+                style={styles.profileImage}
+              />
+            ) : (
+              <AvatarInitials
+                firstName={mapMembers.firstName}
+                lastName={mapMembers.lastName}
+                size={35}
+              />
+            )}
+          </View>
         ))}
         <Pressable
           onPress={handleAddMember}
@@ -106,6 +113,15 @@ const styles = StyleSheet.create({
   membersRow: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  memberAvatar: {
+    marginRight: 10,
+  },
+  profileImage: {
+    width: 35,
+    height: 35,
+    borderRadius: 17.5,
+    backgroundColor: "#f0f0f0",
   },
   addMemberButton: {
     width: 35,

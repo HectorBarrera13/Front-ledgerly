@@ -1,28 +1,32 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Button } from "@/components/Button";
 import CloseButton from "@/components/CloseButton";
 import DebtInfo from "@/components/debts/DebtInfo";
+import AvatarInitials from "@/components/AvatarInitials";
 import { getGroupMembers, createGroupDebt } from "@/services/groupService";
 import { GroupMember } from "@/types/Group";
 import { useAuth } from "@/providers/AuthContext";
 
+const getParam = (value: string | string[] | undefined, defaultValue = ""): string => {
+    return Array.isArray(value) ? value[0] ?? defaultValue : value ?? defaultValue;
+};
+
 export default function AddMembersGroupDebt() {
     const params = useLocalSearchParams();
     const router = useRouter();
-	const { profile } = useAuth(); 
-    const currentUserId = profile?.user.id; 
+    const { profile } = useAuth();
+    const currentUserId = profile?.user.id;
 
-
-    const groupId = Array.isArray(params.groupId) ? params.groupId[0] : params.groupId ?? "";
-    const concept = Array.isArray(params.concept) ? params.concept[0] : params.concept ?? "";
-    const description = Array.isArray(params.description) ? params.description[0] : params.description ?? "";
-    const splitParam = Array.isArray(params.split) ? params.split[0] : params.split ?? "";
-    const amount = Array.isArray(params.amount) ? params.amount[0] : params.amount ?? "0";
+    const groupId = getParam(params.groupId);
+    const concept = getParam(params.concept);
+    const description = getParam(params.description);
+    const splitParam = getParam(params.split);
+    const amount = getParam(params.amount, "0");
     const initialEqual = splitParam === "equal";
-    const total = Number.parseFloat(String(amount)) || 0;
+    const total = Number.parseFloat(amount) || 0;
 
     const [members, setMembers] = useState<GroupMember[]>([]);
     const [loadingMembers, setLoadingMembers] = useState(false);
@@ -103,7 +107,6 @@ export default function AddMembersGroupDebt() {
     useEffect(() => {
         const totalAmount = Object.values(amountsPer).map((v) => Number.parseFloat(v) || 0).reduce((a, b) => a + b, 0);
         setDynamicAmounts(totalAmount);
-        console.log("Monto dinámico:", totalAmount);
     }, [amountsPer]);
 
     const handleFinishDebt = async () => {
@@ -146,7 +149,7 @@ export default function AddMembersGroupDebt() {
                 </View>
 
                 <DebtInfo
-                    concept={String(concept ?? "")}
+                    concept={concept}
                     description={description}
                     amount={dynamicAmounts}
                 />
@@ -190,11 +193,23 @@ export default function AddMembersGroupDebt() {
                     {selected.map((id) => {
                         const member = members.find(m => m.id === id);
                         if (!member) return null;
-						const displayName = id === currentUserId ? "Tú" : `${member.firstName} ${member.lastName}`;
+                        const displayName = id === currentUserId ? "Tú" : `${member.firstName} ${member.lastName}`;
                         return (
                             <View key={id} style={[styles.memberRow, { justifyContent: 'space-between' }]}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                    <Text style={styles.memberDot}>•</Text>
+                                    {member.picture ? (
+                                        <Image
+                                            source={{ uri: member.picture }}
+                                            style={styles.profileImage}
+                                        />
+                                    ) : (
+                                        <AvatarInitials
+                                            firstName={member.firstName}
+                                            lastName={member.lastName}
+                                            size={32}
+                                            style={{ marginRight: 8 }}
+                                        />
+                                    )}
                                     <Text style={[styles.memberText, { flex: 1 }]}>{displayName}</Text>
                                 </View>
                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -255,6 +270,13 @@ const styles = StyleSheet.create({
     },
     memberDot: { color: "#6C1ED6", marginRight: 8 },
     memberText: { color: "#333" },
+    profileImage: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "#f0f0f0",
+        marginRight: 8,
+    },
     continueBtn: {
         marginTop: 24,
         width: "100%",

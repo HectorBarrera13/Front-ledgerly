@@ -1,13 +1,17 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { Debt, DebtStatusText } from "@type/Debt";
 import StatusIcon from "@asset/icon/icon_status.svg";
 import AvatarInitials from "@/components/AvatarInitials";
 
 interface CardDebtProps {
-    debt: Debt;
+    debt: Debt & {
+        debtorSummary?: { firstName: string; lastName: string; picture?: string };
+        creditorSummary?: { firstName: string; lastName: string; picture?: string };
+    };
     onSettle?: (id: string) => void;
     onPress?: (id: string) => void;
+    mode?: "payable" | "receivable";
 }
 
 const formatAmount = (amount: number) => {
@@ -27,10 +31,16 @@ const formatTitle = (title?: string, purpose?: string) => {
     return value.length > 14 ? value.slice(0, 13) + "..." : value;
 };
 
-const CardDebt: React.FC<CardDebtProps> = ({ debt, onSettle, onPress }) => {
+const CardDebt: React.FC<CardDebtProps> = ({ debt, onSettle, onPress, mode }) => {
     const creditorParts = debt.creditor?.split(" ") ?? [];
     const firstName = creditorParts[0] ?? "";
     const lastName = creditorParts[1] ?? "";
+
+    // En payable (deudas por pagar) mostrar foto del acreedor
+    // En receivable (deudas por cobrar) mostrar foto del deudor
+    const profilePicture = mode === "payable" 
+        ? debt.creditorSummary?.picture 
+        : debt.debtorSummary?.picture;
 
     return (
         <TouchableOpacity
@@ -60,11 +70,18 @@ const CardDebt: React.FC<CardDebtProps> = ({ debt, onSettle, onPress }) => {
                 </Text>
             </TouchableOpacity>
             <View style={styles.avatarContainer}>
-                <AvatarInitials
-                    firstName={firstName}
-                    lastName={lastName}
-                    size={32}
-                />
+                {profilePicture ? (
+                    <Image
+                        source={{ uri: profilePicture }}
+                        style={styles.profileImage}
+                    />
+                ) : (
+                    <AvatarInitials
+                        firstName={firstName}
+                        lastName={lastName}
+                        size={32}
+                    />
+                )}
             </View>
         </TouchableOpacity>
     );
@@ -128,6 +145,12 @@ const styles = StyleSheet.create({
         position: "absolute",
         bottom: 12,
         right: 12,
+    },
+    profileImage: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "#f0f0f0",
     },
 });
 

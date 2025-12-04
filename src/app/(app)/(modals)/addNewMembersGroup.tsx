@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, Alert, Image } from "react-native";
 import { useRouter, useLocalSearchParams, Stack } from "expo-router";
 import CloseButton from "@/components/CloseButton";
 import { Button } from "@/components/Button";
@@ -111,12 +111,19 @@ export default function AddGroupMemberScreen() {
                     return (
                         <View key={id} style={[styles.memberRow, { justifyContent: 'space-between' }]}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                <AvatarInitials
-                                    firstName={friend.firstName}
-                                    lastName={friend.lastName}
-                                    size={32}
-                                    style={{ marginRight: 8 }}
-                                />
+                                {friend.picture ? (
+                                    <Image
+                                        source={{ uri: friend.picture }}
+                                        style={styles.profileImage}
+                                    />
+                                ) : (
+                                    <AvatarInitials
+                                        firstName={friend.firstName}
+                                        lastName={friend.lastName}
+                                        size={32}
+                                        style={{ marginRight: 8 }}
+                                    />
+                                )}
                                 <Text style={[styles.memberText, { flex: 1 }]}>{friend.firstName} {friend.lastName}</Text>
                             </View>
                             <Pressable onPress={() => handleRemove(id)} style={{ marginLeft: 12 }}>
@@ -227,6 +234,13 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         marginBottom: 8,
+    },
+    profileImage: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "#f0f0f0",
+        marginRight: 8,
     },
     memberDot: { color: "#6C1ED6", marginRight: 8 },
     memberText: { color: "#333" },

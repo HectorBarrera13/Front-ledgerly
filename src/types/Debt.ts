@@ -16,9 +16,10 @@ export type DebtStatus =
     | "PAYMENT_CONFIRMED";
 
 export interface DebtUserSummary {
-    userId: string;
+    id: string;
     firstName: string;
     lastName: string;
+    picture?: string;
 }
 
 export interface DebtBetweenUsers {

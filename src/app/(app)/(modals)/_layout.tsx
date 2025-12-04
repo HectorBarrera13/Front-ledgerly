@@ -69,6 +69,14 @@ export default function ModalsLayout() {
                     title: "Código QR",
                 }}
             />
+            <Stack.Screen
+                name="addProfilePicture"
+                options={{
+                    headerTitleAlign: "center",
+                    headerShown: false,
+                    title: "Agregar Foto de Perfil",
+                }}
+            />
         </Stack>
     );
 }

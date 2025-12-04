@@ -16,6 +16,7 @@ const friendService = {
             const response = await api.get<Pageable<Friend, string>>(
                 `/friends${params}`
             );
+            console.log("Friends response:", JSON.stringify(response, null, 2));
             return response;
         } catch (error) {
             if (error instanceof ApiError) {
