@@ -28,6 +28,8 @@ export default function ReceivableView() {
             amount: debt.amount ?? 0,
             status: debt.status ?? "PENDING",
             type: "betweenUsers",
+            debtorSummary: debt.debtorSummary,
+            creditorSummary: debt.creditorSummary,
         })),
         ...debtsBetweenAccepted.debts.map((debt: any) => ({
             id: debt.id,
@@ -38,6 +40,8 @@ export default function ReceivableView() {
             amount: debt.amount ?? 0,
             status: debt.status ?? "ACCEPTED",
             type: "betweenUsers",
+            debtorSummary: debt.debtorSummary,
+            creditorSummary: debt.creditorSummary,
         })),
         ...debtsBetweenRejected.debts.map((debt: any) => ({
             id: debt.id,
@@ -48,6 +52,8 @@ export default function ReceivableView() {
             amount: debt.amount ?? 0,
             status: debt.status ?? "REJECTED",
             type: "betweenUsers",
+            debtorSummary: debt.debtorSummary,
+            creditorSummary: debt.creditorSummary,
         })),
         ...debtsBetweenPaymentPending.debts.map((debt: any) => ({
             id: debt.id,
@@ -58,6 +64,8 @@ export default function ReceivableView() {
             amount: debt.amount ?? 0,
             status: debt.status ?? "PAYMENT_CONFIRMATION_PENDING",
             type: "betweenUsers",
+            debtorSummary: debt.debtorSummary,
+            creditorSummary: debt.creditorSummary,
         })),
         ...debtsBetweenPaymentRejected.debts.map((debt: any) => ({
             id: debt.id,
@@ -68,6 +76,8 @@ export default function ReceivableView() {
             amount: debt.amount ?? 0,
             status: debt.status ?? "PAYMENT_CONFIRMATION_REJECTED",
             type: "betweenUsers",
+            debtorSummary: debt.debtorSummary,
+            creditorSummary: debt.creditorSummary,
         })),
         ...debtsQuick.debts
             .filter((debt: any) => debt.status !== "PAYMENT_CONFIRMED")
@@ -280,6 +290,7 @@ export default function ReceivableView() {
                 renderItem={({ item }) => (
                     <CardDebt
                         debt={item}
+                        mode="receivable"
                         onPress={() => router.push(`(modals)/debtDetails?id=${item.id}&mode=receivable&type=${item.type}`)}
                     />
                 )}

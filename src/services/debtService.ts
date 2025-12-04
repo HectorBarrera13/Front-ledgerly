@@ -14,6 +14,7 @@ const debtService = {
         let params = `?role=${role}`;
         if (status) params += `&status=${status}`;
         const response = await api.get(`/debt-between-users${params}`);
+        //console.log(JSON.stringify(response, null, 2));
         return response as DebtsResponse<DebtBetweenUsers>;
     },
 

@@ -3,6 +3,7 @@ export interface GroupMember {
     firstName: string;
     lastName: string;
     phone: string;
+    picture?: string;
 }
 
 export interface Group {

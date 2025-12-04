@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
+import { View, Text, StyleSheet, Pressable, Animated, Image } from "react-native";
 import { Friend } from "@type/Friends";
 import { Button } from "@component/Button";
 import AvatarInitials from "@/components/AvatarInitials";
@@ -45,12 +45,19 @@ export default function FriendCard(props: CardFriendProps) {
                 onPressOut={handlePressOut}
             >
                 <View style={styles.cardContent}>
-                    <AvatarInitials
-                        firstName={props.friend.firstName}
-                        lastName={props.friend.lastName}
-                        size={56}
-                        style={{ marginRight: 16 }}
-                    />
+                    {props.friend.picture ? (
+                        <Image
+                            source={{ uri: props.friend.picture }}
+                            style={styles.profileImage}
+                        />
+                    ) : (
+                        <AvatarInitials
+                            firstName={props.friend.firstName}
+                            lastName={props.friend.lastName}
+                            size={56}
+                            style={{ marginRight: 16 }}
+                        />
+                    )}
 
                     <View style={styles.info}>
                         <Text style={styles.name}>
@@ -97,6 +104,13 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         padding: 12,
+    },
+    profileImage: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: "#f0f0f0",
+        marginRight: 16,
     },
     info: {
         flex: 1,

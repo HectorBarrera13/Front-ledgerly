@@ -22,7 +22,7 @@ export async function createGroup(
 
 export async function getMyGroups(): Promise<Group[]> {
     const response = await apiClient.get<ApiGroupItem[]>("/groups");
-    console.log("getMyGroups response:", response);
+    //console.log("Groups response:", JSON.stringify(response, null, 2));
     return response.map((item: ApiGroupItem) => ({
         ...item.group,
         members: item.members,
@@ -36,6 +36,7 @@ export async function getGroupDetails(groupId: string): Promise<Group> {
 
 export async function getGroupMembers(groupId: string): Promise<GroupMember[]> {
     const response = await apiClient.get<{ items: GroupMember[] }>(`/groups/${groupId}/members`);
+    //console.log("Group members response:", JSON.stringify(response, null, 2));
     return response.items;
 }
 

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, Pressable } from "react-native";
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, Pressable, Image } from "react-native";
 import { useRouter, Stack, useLocalSearchParams } from "expo-router";
 import CardGroupDebt from "@/components/groups/CardGroupDebt";
 import ButtonAdd from "@/components/ButtonAdd";
@@ -108,13 +108,20 @@ export default function GroupDetailsScreen() {
                         <Text style={styles.sectionTitle}>Integrantes del grupo</Text>
                         <View style={styles.membersRow}>
                             {members.map((member) => (
-                                <AvatarInitials
-                                    key={member.id}
-                                    firstName={member.firstName}
-                                    lastName={member.lastName}
-                                    size={40}
-                                    style={{ marginRight: 10 }}
-                                />
+                                <View key={member.id} style={styles.memberContainer}>
+                                    {member.picture ? (
+                                        <Image
+                                            source={{ uri: member.picture }}
+                                            style={styles.profileImage}
+                                        />
+                                    ) : (
+                                        <AvatarInitials
+                                            firstName={member.firstName}
+                                            lastName={member.lastName}
+                                            size={40}
+                                        />
+                                    )}
+                                </View>
                             ))}
                         </View>
 
@@ -247,6 +254,15 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 16,
         marginBottom: 24,
+    },
+    memberContainer: {
+        marginRight: 10,
+    },
+    profileImage: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "#f0f0f0",
     },
     avatar: {
         width: 40,

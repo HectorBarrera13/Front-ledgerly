@@ -27,6 +27,8 @@ export default function PayableView() {
             amount: debt.amount ?? 0,
             status: debt.status ?? "ACCEPTED",
             type: "betweenUsers",
+            debtorSummary: debt.debtorSummary,
+            creditorSummary: debt.creditorSummary,
         })),
         ...debtsBetweenRejected.debts.map((debt: any) => ({
             id: debt.id,
@@ -37,6 +39,8 @@ export default function PayableView() {
             amount: debt.amount ?? 0,
             status: debt.status ?? "REJECTED",
             type: "betweenUsers",
+            debtorSummary: debt.debtorSummary,
+            creditorSummary: debt.creditorSummary,
         })),
         ...debtsBetweenPaymentPending.debts.map((debt: any) => ({
             id: debt.id,
@@ -47,6 +51,8 @@ export default function PayableView() {
             amount: debt.amount ?? 0,
             status: debt.status ?? "PAYMENT_CONFIRMATION_PENDING",
             type: "betweenUsers",
+            debtorSummary: debt.debtorSummary,
+            creditorSummary: debt.creditorSummary,
         })),
         ...debtsBetweenPaymentRejected.debts.map((debt: any) => ({
             id: debt.id,
@@ -57,6 +63,8 @@ export default function PayableView() {
             amount: debt.amount ?? 0,
             status: debt.status ?? "PAYMENT_CONFIRMATION_REJECTED",
             type: "betweenUsers",
+            debtorSummary: debt.debtorSummary,
+            creditorSummary: debt.creditorSummary,
         })),
         ...debtsQuick.debts
             .filter((debt: any) => debt.status !== "PAYMENT_CONFIRMED")
@@ -267,6 +275,7 @@ export default function PayableView() {
                 renderItem={({ item }) => (
                     <CardDebt
                         debt={item}
+                        mode="payable"
                         onPress={() => router.push(`(modals)/debtDetails?id=${item.id}&mode=payable&type=${item.type}`)}
                     />
                 )}

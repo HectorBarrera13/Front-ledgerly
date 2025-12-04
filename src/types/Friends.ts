@@ -4,4 +4,5 @@ export interface Friend {
     lastName: string;
     phone: string;
     addedAt: string;
+    picture?: string;
 }

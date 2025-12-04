@@ -1,24 +1,24 @@
 {
   "expo": {
-    "name": "Front-ledgerly",
-    "slug": "Front-ledgerly",
+    "name": "Ledgerly",
+    "slug": "Ledgerly",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/img/bg_screen.jpg",
+    "icon": "./assets/img/logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/img/bg_screen.jpg",
+      "image": "./assets/img/logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "transparent"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/img/bg_screen.jpg",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/img/logo.png",
+        "backgroundColor": "transparent"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -46,7 +46,7 @@
       "package": "com.anonymous.Frontledgerly"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/logo.png"
     },
     "plugins": [
       [

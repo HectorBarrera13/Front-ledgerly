@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import StatusIcon from "@asset/icon/icon_status.svg";
 import { DebtStatusText, DebtBetweenUsers } from "@/types/Debt";
 import AvatarInitials from "@/components/AvatarInitials";
@@ -31,7 +31,7 @@ const formatTitle = (purpose: string = "Sin título") => {
 const CardGroupDebt: React.FC<CardGroupDebtProps> = ({ debt, onPress, onSettle }) => {
     const { profile } = useAuth();
     const currentUserId = profile?.user?.id;
-    const isDebtor = currentUserId === debt.debtorSummary.userId;
+    const isDebtor = currentUserId === debt.debtorSummary.id;
     const showUser = isDebtor ? debt.creditorSummary : debt.debtorSummary;
     const userName = `${showUser.firstName} ${showUser.lastName}`;
 
@@ -63,11 +63,18 @@ const CardGroupDebt: React.FC<CardGroupDebtProps> = ({ debt, onPress, onSettle }
                 </Text>
             </TouchableOpacity>
             <View style={styles.avatarContainer}>
-                <AvatarInitials
-                    firstName={showUser.firstName}
-                    lastName={showUser.lastName}
-                    size={32}
-                />
+                {showUser.picture ? (
+                    <Image
+                        source={{ uri: showUser.picture }}
+                        style={styles.profileImage}
+                    />
+                ) : (
+                    <AvatarInitials
+                        firstName={showUser.firstName}
+                        lastName={showUser.lastName}
+                        size={32}
+                    />
+                )}
             </View>
         </TouchableOpacity>
     );
@@ -131,6 +138,12 @@ const styles = StyleSheet.create({
         position: "absolute",
         bottom: 12,
         right: 12,
+    },
+    profileImage: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "#f0f0f0",
     },
 });
 
