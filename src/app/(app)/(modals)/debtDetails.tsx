@@ -43,8 +43,8 @@ export default function DebtDetailScreen() {
     }
 
     const mode =
-        debt.debtorSummary?.userId === currentUserId ? "payable" :
-        debt.creditorSummary?.userId === currentUserId ? "receivable" :
+        debt.debtorSummary?.id === currentUserId ? "payable" :
+        debt.creditorSummary?.id === currentUserId ? "receivable" :
         debt.role === "DEBTOR" ? "payable" :
         debt.role === "CREDITOR" ? "receivable" :
         "";
