@@ -149,7 +149,6 @@ class ApiClient {
                 return null as unknown as R;
             }
         } catch (error) {
-            console.error("Error during fetchWrapper:", error);
             // 1. Si nosotros lanzamos ApiError manualmente arriba (400, 500, etc)
             if (error instanceof ApiError) {
                 throw error;

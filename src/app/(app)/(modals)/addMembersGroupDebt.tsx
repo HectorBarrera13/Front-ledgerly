@@ -75,7 +75,18 @@ export default function AddMembersGroupDebt() {
     }, [selected.length, initialEqual, total]);
 
     const handleAmountChange = (id: string, value: string) => {
-        setAmountsPer(prev => ({ ...prev, [id]: value }));
+        const cleanedValue = value.replace(/[^0-9.]/g, '');
+
+        const parts = cleanedValue.split('.');
+        if (parts.length > 2) {
+            return;
+        }
+        
+        if (parts[1] && parts[1].length > 2) {
+            return;
+        }
+        
+        setAmountsPer(prev => ({ ...prev, [id]: cleanedValue }));
     };
 
     const [memberName, setMemberName] = useState("");
