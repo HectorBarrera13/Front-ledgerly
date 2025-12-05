@@ -23,6 +23,13 @@ export default function SignupScreen() {
     const [acceptPolicy, setAcceptPolicy] = useState(false);
     const [loading, setLoading] = useState(false);
 
+    const handlePhoneChange = (text: string) => {
+        const numericText = text.replace(/[^0-9]/g, '');
+        if (numericText.length <= 10) {
+            setPhoneNumber(numericText);
+        }
+    };
+
     const handleRegister = async () => {
         if (!acceptPolicy) {
             Alert.alert(
@@ -77,7 +84,7 @@ export default function SignupScreen() {
                 <AuthInput
                     placeholder="Teléfono"
                     value={phoneNumber}
-                    onChangeText={setPhoneNumber}
+                    onChangeText={handlePhoneChange}
                     keyboardType="phone-pad"
                     containerStyle={styles.input}
                 />
